@@ -1,7 +1,7 @@
 # MILES: Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning
-Ruilin Tong, [Dong Gong<sup>†</sup>](https://donggong1.github.io/)
+[Ruilin Tong](https://github.com/RuilinTong), [Dong Gong](https://donggong1.github.io/)
 
-University of New South Wales (UNSW Sydney)
+[Artificer AI Lab](https://donggong1.github.io/group/), [University of New South Wales (UNSW Sydney)](https://www.unsw.edu.au/)
 
 ## TODO
 - [x] Release the code of MILES. (Coming soon)
