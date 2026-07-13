@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.9.4/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
     :root {
       --bg: #f7f9fc;
@@ -75,6 +77,33 @@
     .authors { margin-top: 20px; font-size: 18px; }
     .affiliation { color: var(--muted); margin-top: 4px; }
     .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+    .moram-related-works {
+      margin: 1rem 16px 0;
+      text-align: center;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .moram-related-works-links {
+      display: block;
+      margin-top: 0.35rem;
+    }
+    .moram-related-works-links a {
+      margin: 0 0.35rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      vertical-align: middle;
+    }
+    .moram-related-works-links a:hover { text-decoration: underline; }
+    .moram-related-works .moram-related-icon {
+      width: 0.95rem;
+      height: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+    }
     .button {
       display: inline-flex; align-items: center; justify-content: center;
       min-width: 118px; padding: 11px 18px;
@@ -280,6 +309,16 @@
         <a class="button" href="#">Code</a>
         <a class="button" href="#citation">BibTeX</a>
       </div>
+      <p class="moram-related-works">
+        <span><strong>Please check out our other works</strong></span>
+        <span class="moram-related-works-links">
+          <a href="https://zhaoc5.github.io/DyMoE/" target="_blank" rel="noopener noreferrer" title="LLaVA-DyMoE (CVPR 2026)"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>LLaVA-DyMoE</span></a>
+          <a href="https://arxiv.org/abs/2412.01004" target="_blank" rel="noopener noreferrer" title="CoDyRA (arXiv)"><span class="moram-related-icon"><i class="ai ai-arxiv" aria-hidden="true"></i></span><span>CoDyRA</span></a>
+          <a href="https://arxiv.org/abs/2403.18886" target="_blank" rel="noopener noreferrer" title="SEMA (CVPR 2025)"><span class="moram-related-icon"><i class="ai ai-arxiv" aria-hidden="true"></i></span><span>SEMA</span></a>
+          <a href="https://artificer-ai-lab.github.io/MoRAM/" target="_blank" rel="noopener noreferrer" title="MoRAM"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>MoRAM</span></a>
+          <a href="https://donggong1.github.io/projects/anomdec-memae/" target="_blank" rel="noopener noreferrer" title="MemAE"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>MemAE</span></a>
+        </span>
+      </p>
   </div>
   
   <main>
