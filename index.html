@@ -76,7 +76,7 @@
     }
     .authors { margin-top: 20px; font-size: 18px; }
     .affiliation { color: var(--muted); margin-top: 4px; }
-    .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+    .buttons { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
     .moram-related-works {
       margin: 1rem 16px 0;
       text-align: center;
@@ -106,11 +106,12 @@
     }
     .button {
       display: inline-flex; align-items: center; justify-content: center;
-      min-width: 118px; padding: 11px 18px;
+      min-width: 96px; padding: 8px 14px;
       border-radius: 999px;
       border: 1px solid #d7deea;
       background: var(--paper);
       color: var(--ink);
+      font-size: 14px;
       font-weight: 750;
       box-shadow: 0 6px 16px rgba(24, 39, 75, 0.06);
     }
@@ -124,7 +125,7 @@
       box-shadow: var(--shadow);
       padding: clamp(22px, 3vw, 34px);
     }
-    .section-title { font-size: clamp(24px, 3vw, 36px); line-height: 1.15; letter-spacing: -0.03em; margin: 0 0 16px; }
+    .section-title { font-size: clamp(22px, 2.5vw, 30px); line-height: 1.15; letter-spacing: -0.03em; margin: 0 0 16px; }
     .lead { color: var(--muted); font-size: 18px; margin-top: 0; }
     .figure { margin: 0; text-align: center; }
     .figure img {
@@ -132,6 +133,33 @@
       border-radius: 16px;
       border: 1px solid var(--line);
       background: #fff;
+    }
+    .tradeoff-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 13fr) minmax(240px, 7fr);
+      gap: clamp(24px, 4vw, 48px);
+      align-items: center;
+    }
+    .tradeoff-figure img {
+      width: 100%;
+      max-width: 740px;
+    }
+    .tradeoff-copy .lead,
+    .tradeoff-copy .caption {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .tradeoff-copy .lead {
+      margin-bottom: 16px;
+    }
+    .tradeoff-copy .caption {
+      margin: 0;
+      text-align: left;
+    }
+    @media (max-width: 760px) {
+      .tradeoff-layout {
+        grid-template-columns: 1fr;
+      }
     }
     .caption { margin-top: 12px; color: var(--muted); font-size: 15px; }
     .placeholder {
@@ -227,7 +255,7 @@
 
         margin:0;
 
-        line-height:1.05;
+        line-height:1.25;
     }
 
     .table-wrap{
@@ -250,6 +278,9 @@
       margin: 18px auto;
       overflow-x: auto;
     }
+    .ablation-grid {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) !important;
+    }
     .ablation-table {
       width: 100%;
       min-width: 0 !important;
@@ -260,15 +291,15 @@
       padding: 8px 9px;
     }
     .ablation-figure img {
-      width: 75%;
-      max-width: 520px;
-      height: 520px;
+      width: 65%;
+      max-width: 420px;
+      height: auto;
       border-radius: 16px;
       border: 1px solid var(--line);
       background: #fff;
     }
     @media (max-width: 980px) {
-      .ablation-grid { grid-template-columns: 1fr; }
+      .ablation-grid { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -311,11 +342,11 @@
       <p class="moram-related-works">
         <span><strong>Please check out our other works</strong></span>
         <span class="moram-related-works-links">
-          <a href="https://zhaoc5.github.io/DyMoE/" target="_blank" rel="noopener noreferrer" title="LLaVA-DyMoE (CVPR 2026)"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>LLaVA-DyMoE</span></a>
-          <a href="https://arxiv.org/abs/2412.01004" target="_blank" rel="noopener noreferrer" title="CoDyRA (arXiv)"><span class="moram-related-icon"><i class="ai ai-arxiv" aria-hidden="true"></i></span><span>CoDyRA</span></a>
-          <a href="https://arxiv.org/abs/2403.18886" target="_blank" rel="noopener noreferrer" title="SEMA (CVPR 2025)"><span class="moram-related-icon"><i class="ai ai-arxiv" aria-hidden="true"></i></span><span>SEMA</span></a>
           <a href="https://artificer-ai-lab.github.io/MoRAM/" target="_blank" rel="noopener noreferrer" title="MoRAM"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>MoRAM</span></a>
+          <a href="https://zhaoc5.github.io/DyMoE/" target="_blank" rel="noopener noreferrer" title="LLaVA-DyMoE (CVPR 2026)"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>LLaVA-DyMoE</span></a>
           <a href="https://donggong1.github.io/projects/anomdec-memae/" target="_blank" rel="noopener noreferrer" title="MemAE"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>MemAE</span></a>
+          <a href="https://arxiv.org/abs/2403.18886" target="_blank" rel="noopener noreferrer" title="SEMA (CVPR 2025)"><span class="moram-related-icon"><i class="ai ai-arxiv" aria-hidden="true"></i></span><span>SEMA</span></a>
+          <a href="https://github.com/RuilinTong/CSReL-Coreset-CL" target="_blank" rel="noopener noreferrer" title="CSReL"><span class="moram-related-icon"><i class="fa-brands fa-github" aria-hidden="true"></i></span><span>CSReL</span></a>
         </span>
       </p>
   </div>
@@ -473,13 +504,17 @@
     <section>
       <div class="container card">
         <h2 class="section-title">Accuracy–Efficiency Tradeoff</h2>
-        <p class="lead">MILES achieves a strong accuracy-token tradeoff compared with Self-Consistency, Tree-of-Thoughts, rStar, and DORA.</p>
-        <figure class="figure">
-          <!-- Put your accuracy-token figure at: assets/accuracy_tokens.png -->
-          <img src="assets/accuracy_tokens.png" alt="Accuracy versus response-token cost" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="placeholder" style="display:none;">Place accuracy-token figure here:<br>assets/accuracy_tokens.png</div>
-          <figcaption class="caption">MILES dominates the frontier across evaluated token budgets while baselines flatten at higher budgets.</figcaption>
-        </figure>
+        <div class="tradeoff-layout">
+          <figure class="figure tradeoff-figure">
+            <!-- Put your accuracy-token figure at: assets/accuracy_tokens.png -->
+            <img src="assets/accuracy_tokens.png" alt="Accuracy versus response-token cost" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="placeholder" style="display:none;">Place accuracy-token figure here:<br>assets/accuracy_tokens.png</div>
+          </figure>
+          <div class="tradeoff-copy">
+            <p class="lead">MILES achieves a strong accuracy-token tradeoff compared with Self-Consistency, Tree-of-Thoughts, rStar, and DORA.</p>
+            <p class="caption">MILES dominates the frontier across evaluated token budgets while baselines flatten at higher budgets.</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -607,10 +642,14 @@
     <section id="citation">
       <div class="container card">
         <h2 class="section-title">Citation</h2>
-        <pre class="bibtex"><code>@article{tong2026miles,
+        <pre class="bibtex"><code>@misc{tong2026milesmodularinstructionmemory,
   title={MILES: Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning},
-  author={Tong, Ruilin and Gong, Dong},
-  year={2026}
+  author={Ruilin Tong and Dong Gong},
+  year={2026},
+  eprint={2607.06974},
+  archivePrefix={arXiv},
+  primaryClass={cs.CL},
+  url={https://arxiv.org/abs/2607.06974},
 }</code></pre>
       </div>
     </section>
