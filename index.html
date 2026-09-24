@@ -3,646 +3,918 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="MILES: Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning.">
-  <link rel="icon" type="image/png" href="assets/favicon_v2.png">
   <title>MILES: Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning</title>
+  <meta name="description" content="MILES lets a frozen LLM improve itself at test time from its own reasoning trajectories, without ground-truth labels: it stores sub-goals and sub-instructions as modular memory and learns online when to apply them.">
+  <link rel="canonical" href="https://artificer-ai-lab.github.io/MILES/">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1d" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Artificer AI Lab">
+  <meta property="og:title" content="MILES: Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning">
+  <meta property="og:description" content="Test-time self-improvement for frozen LLMs: step-wise instruction memory built from the model's own confident trajectories, with learned, correctness-optimized selection.">
+  <meta property="og:url" content="https://artificer-ai-lab.github.io/MILES/">
+  <meta property="og:image" content="https://artificer-ai-lab.github.io/MILES/assets/social_card.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon_192.png">
+  <link rel="apple-touch-icon" href="assets/favicon_192.png">
+  <script>
+    // Apply a saved theme before first paint; with nothing saved, the page follows the system setting.
+    (function () {
+      try {
+        var t = localStorage.getItem('miles-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.9.4/css/academicons.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha384-PPIZEGYM1v8zp5Py7UjFb79S58UeqCL9pYVnVPURKEqvioPROaVAJKKLzvH2rDnI" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.9.4/css/academicons.min.css" integrity="sha384-cxs0Bj979VdNByRZzAJ2KJWG8vH/kG7fwWZAIZW3Tmsw0rAuP/pu3I3LitFWEs18" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"
+          onload="renderMathInElement(document.body, {delimiters: [{left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}], throwOnError: false});"></script>
   <style>
+    /* Colors follow donggong1.github.io (al-folio): magenta accent in light mode, teal accent in dark mode. */
     :root {
-      --bg: #f7f9fc;
-      --paper: #ffffff;
-      --ink: #172033;
-      --muted: #5f6b7a;
-      --line: #e6ebf2;
-      --blue: #1f5eff;
-      --blue-dark: #1745b8;
-      --green: #0f766e;
-      --orange: #c2410c;
-      --shadow: 0 20px 60px rgba(24, 39, 75, 0.10);
-      --radius: 22px;
-      --max: 1120px;
+      color-scheme: light;
+      --bg: #ffffff;
+      --bg-soft: #f6f6f7;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --text-2: #48484d;
+      --text-3: #6b6b70;
+      --line: rgba(0, 0, 0, 0.1);
+      --line-2: rgba(0, 0, 0, 0.18);
+      --accent: #a22799;
+      --accent-strong: #86207f;
+      --accent-soft: rgba(162, 39, 153, 0.06);
+      --accent-soft-2: rgba(162, 39, 153, 0.16);
+      --ours-solid: #f9f2f9;
+      --ours-best: #a22799;
+      --on-accent: #ffffff;
+      --pill-bg: #363636;
+      --pill-bg-hover: #141414;
+      --pill-text: #ffffff;
+      --nav-bg: rgba(255, 255, 255, 0.86);
+      --code-bg: #faf6fa;
+      --figure-bg: #ffffff;
+      --good: #15803d;
+      --bad: #c2410c;
+      --confident: #2e7d32;
+      --uncertain: #c2410c;
+      --memory: #0f766e;
+      --c-teal: #0f766e;
+      --c-teal-soft: rgba(15, 118, 110, 0.06);
+      --c-magenta: #a22799;
+      --c-magenta-soft: rgba(162, 39, 153, 0.06);
+      --c-orange: #c2410c;
+      --c-orange-soft: rgba(194, 65, 12, 0.06);
+      --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 22px rgba(16, 24, 40, 0.06);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --maxw: 1100px;
+      --readw: 840px;
     }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at top left, rgba(31, 94, 255, 0.10), transparent 30rem),
-        radial-gradient(circle at top right, rgba(15, 118, 110, 0.10), transparent 28rem),
-        var(--bg);
-      line-height: 1.65;
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #1c1c1d;
+      --bg-soft: #242427;
+      --surface: #212529;
+      --text: #e8e8e8;
+      --text-2: #c6c6ca;
+      --text-3: #a3a3a9;
+      --line: #3a3a3f;
+      --line-2: #505056;
+      --accent: #2698ba;
+      --accent-strong: #52b8d6;
+      --accent-soft: rgba(38, 152, 186, 0.1);
+      --accent-soft-2: rgba(38, 152, 186, 0.28);
+      --ours-solid: #223138;
+      --ours-best: #52b8d6;
+      --on-accent: #0d1b21;
+      --pill-bg: #e8e8e8;
+      --pill-bg-hover: #ffffff;
+      --pill-text: #1c1c1d;
+      --nav-bg: rgba(28, 28, 29, 0.86);
+      --code-bg: #2c3237;
+      --good: #4ade80;
+      --bad: #fb923c;
+      --confident: #6fcf73;
+      --uncertain: #fb923c;
+      --memory: #2dd4bf;
+      --c-teal: #2dd4bf;
+      --c-teal-soft: rgba(45, 212, 191, 0.08);
+      --c-magenta: #e27ad8;
+      --c-magenta-soft: rgba(226, 122, 216, 0.08);
+      --c-orange: #fb923c;
+      --c-orange-soft: rgba(251, 146, 60, 0.08);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 22px rgba(0, 0, 0, 0.22);
     }
-    a { color: var(--blue); text-decoration: none; }
-    a:hover { color: var(--blue-dark); }
-    .container { width: min(var(--max), calc(100% - 32px)); margin: 0 auto; }
-    .nav {
-      position: sticky; top: 0; z-index: 10;
-      backdrop-filter: blur(16px);
-      background: rgba(247, 249, 252, 0.82);
-      border-bottom: 1px solid rgba(230, 235, 242, 0.85);
-    }
-    .nav-inner { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
-    .brand { font-weight: 800; letter-spacing: 0.02em; color: var(--ink); }
-    .nav-links { display: flex; gap: 18px; font-size: 14px; font-weight: 600; }
-    .hero { padding: 72px 0 38px; text-align: center; }
-    .tag {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 7px 12px;
-      border: 1px solid #dbe5ff;
-      background: #eef4ff;
-      border-radius: 999px;
-      color: #22408f;
-      font-size: 13px;
-      font-weight: 700;
-    }
-    h1 {
-      margin: 22px auto 18px;
-      max-width: 980px;
-      font-size: clamp(36px, 5.2vw, 68px);
-      line-height: 1.05;
-      letter-spacing: -0.05em;
-    }
-    .subtitle {
-      margin: 0 auto;
-      max-width: 840px;
-      color: var(--muted);
-      font-size: clamp(18px, 2vw, 22px);
-    }
-    .authors { margin-top: 20px; font-size: 18px; }
-    .affiliation { color: var(--muted); margin-top: 4px; }
-    .buttons { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
-    .moram-related-works {
-      margin: 1rem 16px 0;
-      text-align: center;
-      font-size: 0.9rem;
-      line-height: 1.55;
-      color: var(--muted);
-    }
-    .moram-related-works-links {
-      display: block;
-      margin-top: 0.35rem;
-    }
-    .moram-related-works-links a {
-      margin: 0 0.35rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.2rem;
-      vertical-align: middle;
-    }
-    .moram-related-works-links a:hover { text-decoration: underline; }
-    .moram-related-works .moram-related-icon {
-      width: 0.95rem;
-      height: 0.95rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.72rem;
-    }
-    .button {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 96px; padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid #d7deea;
-      background: var(--paper);
-      color: var(--ink);
-      font-size: 14px;
-      font-weight: 750;
-      box-shadow: 0 6px 16px rgba(24, 39, 75, 0.06);
-    }
-    .button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
-    .button.disabled { color: #7a8594; background: #f3f5f8; }
-    section { padding: 34px 0; }
-    .card {
-      background: rgba(255,255,255,0.92);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: clamp(22px, 3vw, 34px);
-    }
-    .section-title { font-size: clamp(22px, 2.5vw, 30px); line-height: 1.15; letter-spacing: -0.03em; margin: 0 0 16px; }
-    .lead { color: var(--muted); font-size: 18px; margin-top: 0; }
-    .figure { margin: 0; text-align: center; }
-    .figure img {
-      width: 100%; max-width: 1040px; height: auto;
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-    .tradeoff-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 13fr) minmax(240px, 7fr);
-      gap: clamp(24px, 4vw, 48px);
-      align-items: center;
-    }
-    .tradeoff-figure img {
-      width: 100%;
-      max-width: 740px;
-    }
-    .tradeoff-copy .lead,
-    .tradeoff-copy .caption {
-      font-size: 16px;
-      line-height: 1.6;
-    }
-    .tradeoff-copy .lead {
-      margin-bottom: 16px;
-    }
-    .tradeoff-copy .caption {
-      margin: 0;
-      text-align: left;
-    }
-    @media (max-width: 760px) {
-      .tradeoff-layout {
-        grid-template-columns: 1fr;
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #1c1c1d;
+        --bg-soft: #242427;
+        --surface: #212529;
+        --text: #e8e8e8;
+        --text-2: #c6c6ca;
+        --text-3: #a3a3a9;
+        --line: #3a3a3f;
+        --line-2: #505056;
+        --accent: #2698ba;
+        --accent-strong: #52b8d6;
+        --accent-soft: rgba(38, 152, 186, 0.1);
+        --accent-soft-2: rgba(38, 152, 186, 0.28);
+      --ours-solid: #223138;
+      --ours-best: #52b8d6;
+        --on-accent: #0d1b21;
+        --pill-bg: #e8e8e8;
+        --pill-bg-hover: #ffffff;
+        --pill-text: #1c1c1d;
+        --nav-bg: rgba(28, 28, 29, 0.86);
+        --code-bg: #2c3237;
+        --good: #4ade80;
+        --bad: #fb923c;
+        --confident: #6fcf73;
+        --uncertain: #fb923c;
+        --memory: #2dd4bf;
+        --c-teal: #2dd4bf;
+        --c-teal-soft: rgba(45, 212, 191, 0.08);
+        --c-magenta: #e27ad8;
+        --c-magenta-soft: rgba(226, 122, 216, 0.08);
+        --c-orange: #fb923c;
+        --c-orange-soft: rgba(251, 146, 60, 0.08);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 22px rgba(0, 0, 0, 0.22);
       }
     }
-    .caption { margin-top: 12px; color: var(--muted); font-size: 15px; }
-    .placeholder {
-      border: 2px dashed #cbd5e1;
-      border-radius: 16px;
-      background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 10px, #f1f5f9 10px, #f1f5f9 20px);
-      min-height: 210px;
-      display: flex; align-items: center; justify-content: center;
-      color: #64748b; font-weight: 700; text-align: center; padding: 24px;
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Roboto, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
     }
-    .grid { display: grid; gap: 18px; }
-    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .mini-card {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: #fff;
-      padding: 22px;
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    img, video { max-width: 100%; height: auto; display: block; }
+    p { margin: 0 0 14px; }
+    sup { line-height: 0; }
+    .wrap { width: min(var(--maxw), 100% - 32px); margin-inline: auto; }
+    .read { max-width: var(--readw); }
+    .center { text-align: center; margin-inline: auto; }
+    .skip-link { position: absolute; left: -9999px; top: 8px; z-index: 100; background: var(--pill-bg); color: var(--pill-text); padding: 8px 14px; border-radius: 8px; }
+    .skip-link:focus { left: 12px; }
+
+    /* Reading progress + sticky nav, as on the al-folio homepage */
+    .progress { position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60; pointer-events: none; }
+    .progress span { display: block; height: 100%; width: 0; background: var(--accent); }
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--nav-bg);
+      -webkit-backdrop-filter: saturate(180%) blur(12px);
+      backdrop-filter: saturate(180%) blur(12px);
+      border-bottom: 1px solid var(--line);
     }
-    .mini-card h3 { margin: 0 0 8px; font-size: 20px; }
-    .mini-card p { margin: 0; color: var(--muted); }
-    .good { color: var(--green); font-weight: 800; }
-    .bad { color: var(--orange); font-weight: 800; }
-    .formula {
-      font-family: "Noto Serif", Georgia, serif;
-      text-align: center;
-      font-size: 24px;
-      padding: 18px;
-      background: #f8fafc;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      margin: 14px 0;
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); font-size: 19px; font-weight: 500; letter-spacing: 0.02em; }
+    .brand:hover { color: var(--text); text-decoration: none; }
+    .brand img { width: 28px; height: 28px; border-radius: 7px; background: #fff; }
+    .nav-links { display: flex; align-items: center; gap: 2px; }
+    .nav-links a { color: var(--text); font-size: 15px; padding: 6px 10px; border-radius: 8px; }
+    .nav-links a:hover { color: var(--accent); text-decoration: none; }
+    .nav-links a.active { color: var(--accent); }
+    .theme-toggle {
+      margin-left: 6px; width: 36px; height: 36px; display: inline-grid; place-items: center;
+      border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text);
+      cursor: pointer; font-size: 15px;
     }
-    .flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-top: 18px; }
-    .flow span { padding: 10px 14px; border-radius: 999px; background: #eef4ff; color: #244188; font-weight: 750; }
-    .flow b { color: #91a0b4; }
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
-    .compact-table table { min-width: 0; font-size: 14px; }
-    .compact-table th, .compact-table td { padding: 9px 10px; }
-    .compact-table .dataset { vertical-align: middle; }
-    .transfer-grid { align-items: start; }
-    table { width: 100%; border-collapse: collapse; min-width: 780px; font-size: 14px; }
-    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
-    .dataset, .model {text-align: left;}
-    th { background: #f1f5f9; font-weight: 800; color: #263246; }
-    .ours { background: #edf4ff; font-weight: 800; }
-    .best { font-weight: 900; }
-    .note { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
-    .bibtex {
-      background: #0f172a;
-      color: #e2e8f0;
-      border-radius: 16px;
-      padding: 22px;
-      overflow-x: auto;
-      font-size: 14px;
-      line-height: 1.55;
+    .theme-toggle:hover { color: var(--accent); border-color: var(--accent-soft-2); }
+    @media (max-width: 760px) { .nav-links a { display: none; } }
+
+    /* Hero */
+    .hero { padding: 52px 0 6px; text-align: center; }
+    .title-row { display: flex; align-items: center; justify-content: center; gap: 22px; }
+    .title-logo { width: 112px; height: 112px; flex: none; border-radius: 20px; background: var(--figure-bg); padding: 4px; }
+    h1 {
+      margin: 0; max-width: 940px; text-align: left; text-wrap: balance;
+      font-size: clamp(28px, 3.4vw, 40px); line-height: 1.22; font-weight: 400; letter-spacing: -0.01em;
     }
-    footer { padding: 50px 0 70px; color: var(--muted); text-align: center; }
-    @media (max-width: 820px) {
-      .nav-links { display: none; }
-      .grid.two, .grid.three { grid-template-columns: 1fr; }
-      .hero { padding-top: 48px; }
-      table { font-size: 13px; }
+    h1 .name { font-weight: 500; }
+    .tldr {
+      max-width: 860px; margin: 26px auto 0; padding: 16px 20px;
+      border: 1px solid var(--accent-soft-2); border-radius: var(--radius);
+      background: var(--accent-soft); color: var(--text);
+      text-align: left; font-size: 17.5px; line-height: 1.65;
     }
-    
-    .title-group{
-        display:flex;
-        justify-content:center;
-        align-items:center;
-
-        gap:24px;
-
-        margin-top:20px;
-        margin-bottom:20px;
+    .tldr-label {
+      display: inline-block; margin-right: 9px; padding: 1px 9px; border-radius: 999px;
+      background: var(--accent); color: var(--on-accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; vertical-align: 2px;
     }
-
-    .title-logo{
-
-        width:150px;
-        height:150px;
-
-        object-fit:contain;
-
-        flex-shrink:0;
+    .authors { margin-top: 24px; font-size: 19.5px; }
+    .authors .author { white-space: nowrap; }
+    .affil { margin-top: 2px; font-size: 16.5px; color: var(--text-2); }
+    .note-small { margin-top: 2px; font-size: 13px; color: var(--text-3); }
+    .pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px; border-radius: 999px;
+      background: var(--pill-bg); color: var(--pill-text); font-size: 15px; font-weight: 500; line-height: 1.4;
+      transition: background-color 0.15s ease, transform 0.15s ease;
     }
-
-    .title-text{
-
-        text-align:center;
-    }
-
-    .title-text h1{
-
-        margin:0;
-
-        line-height:1.25;
+    .pill:hover { background: var(--pill-bg-hover); color: var(--pill-text); text-decoration: none; transform: translateY(-1px); }
+    .others { margin: 18px 0 0; font-size: 14px; color: var(--text-2); }
+    .others strong { font-weight: 500; }
+    .others-links { display: block; margin-top: 4px; }
+    .others-links a { display: inline-flex; align-items: center; gap: 5px; margin: 0 7px; white-space: nowrap; }
+    .others-links i { font-size: 0.85em; }
+    @media (max-width: 760px) {
+      .hero { padding-top: 34px; }
+      .title-row { flex-direction: column; gap: 12px; }
+      .title-logo { width: 84px; height: 84px; }
+      h1 { text-align: center; }
+      .tldr { font-size: 16.5px; }
     }
 
-    .table-wrap{
-        margin-top:18px;
-        margin-bottom:18px;
+    /* Sections */
+    section { padding-top: 64px; scroll-margin-top: 64px; }
+    .eyebrow { margin: 0 0 6px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+    h2 { margin: 0 0 14px; font-size: clamp(24px, 2.6vw, 31px); line-height: 1.22; font-weight: 500; letter-spacing: -0.005em; }
+    h3 { margin: 0 0 8px; font-size: 18.5px; line-height: 1.35; font-weight: 500; }
+    .lead { max-width: var(--readw); margin: 0 0 22px; font-size: 18px; color: var(--text-2); }
+    .compare > *, .callouts > *, .component > *, .routes > *, .split > *, .grid-2 > *, .grid-3 > *, .case > * { min-width: 0; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); }
+    .muted { color: var(--text-3); }
+    .nw { white-space: nowrap; }
+    @media (max-width: 760px) { section { padding-top: 48px; } .lead { font-size: 17px; } }
+
+    /* Figures: always on white, because the figure files have transparent or white backgrounds */
+    .figure { margin: 0 auto; max-width: 900px; }
+    .figure.wide { max-width: 1000px; }
+    .figure.narrow { max-width: 780px; }
+    .figure > figcaption, .fig-actions { text-align: center; max-width: 820px; margin-inline: auto; }
+    .frame {
+      display: block; background: var(--figure-bg); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: clamp(10px, 2vw, 20px); box-shadow: var(--shadow);
+    }
+    .frame img { width: 100%; margin: 0 auto; font-size: 14px; color: var(--text-3); }
+    figcaption { margin-top: 12px; font-size: 14.5px; line-height: 1.55; color: var(--text-3); }
+    figcaption b { color: var(--text-2); font-weight: 500; }
+    .fig-actions { margin-top: 4px; font-size: 14px; }
+    .fig-actions a { display: inline-flex; align-items: center; gap: 6px; }
+
+    /* Walkthrough controls (same layout as the MoRAM page, in this site's accent color) */
+    .walk-frame object { display: block; width: 100%; height: auto; aspect-ratio: 1000 / 520; }
+    .walk-frame object img { display: block; width: 100%; height: auto; }
+    .walk-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 12px auto 0; }
+    .walk-controls[hidden] { display: none; }
+    .walk-btn {
+      width: 30px; height: 30px; padding: 0; display: inline-grid; place-items: center; cursor: pointer;
+      border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--text);
+      transition: border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    }
+    .walk-btn:hover { border-color: var(--accent-soft-2); color: var(--accent); }
+    .walk-btn:active { transform: translateY(1px); }
+    .walk-btn--play { width: 36px; height: 36px; background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 4px 12px var(--accent-soft-2); }
+    .walk-btn--play:hover { color: var(--on-accent); background: var(--accent-strong); border-color: var(--accent-strong); }
+    .walk-btn--play .i-play, .walk-btn--play.is-paused .i-pause { display: none; }
+    .walk-btn--play.is-paused .i-play { display: block; }
+    .walk-divider { width: 1px; height: 20px; margin: 0 6px; background: var(--line-2); }
+    .walk-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+    .walk-chip {
+      padding: 6px 12px; cursor: pointer; border: 1px solid var(--line-2); border-radius: 999px;
+      background: var(--surface); color: var(--text-2); font: 700 12.5px/1 Roboto, system-ui, sans-serif; letter-spacing: 0.03em;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .walk-chip:hover { border-color: var(--accent-soft-2); color: var(--accent); }
+    .walk-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+    /* Abstract */
+    #abstract h2 { text-align: center; }
+    .abstract { max-width: var(--readw); margin: 0 auto; text-align: justify; }
+    @media (max-width: 760px) { .abstract { text-align: left; } }
+    .callouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 980px; margin: 28px auto 0; }
+    .callout {
+      padding: 14px 16px; border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: var(--radius-sm);
+      background: var(--cs); font-size: 15px; line-height: 1.55; color: var(--text-2);
+    }
+    .callout .k { margin-bottom: 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c); }
+    .callout.teal { --c: var(--c-teal); --cs: var(--c-teal-soft); }
+    .callout.magenta { --c: var(--c-magenta); --cs: var(--c-magenta-soft); }
+    .callout.orange { --c: var(--c-orange); --cs: var(--c-orange-soft); }
+    @media (max-width: 860px) { .callouts { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Motivation */
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .compare .card.ours-card { border-color: var(--accent-soft-2); box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); }
+    .checklist { list-style: none; margin: 0; padding: 0; }
+    .checklist li { position: relative; margin: 10px 0; padding-left: 28px; font-size: 16px; line-height: 1.55; color: var(--text-2); }
+    .checklist li::before { position: absolute; left: 2px; top: 0; font-weight: 700; }
+    .checklist.bad li::before { content: "\2715"; color: var(--bad); }
+    .checklist.good li::before { content: "\2713"; color: var(--good); }
+    @media (max-width: 760px) { .compare { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Method */
+    .components { display: grid; gap: 16px; margin-top: 28px; }
+    .component {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 24px; align-items: start;
+      padding: 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+    }
+    .component p { font-size: 16px; color: var(--text-2); }
+    .component p:last-child { margin-bottom: 0; }
+    .num {
+      display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: 9px; border-radius: 50%;
+      background: var(--accent-soft-2); color: var(--accent); font-size: 14px; font-weight: 700; vertical-align: 1px;
+    }
+    .math { padding: 4px 16px 10px; border-radius: var(--radius-sm); background: var(--bg-soft); overflow-x: auto; }
+    .math .katex { font-size: 1.08em; }
+    .math .where { margin: 2px 0 6px; font-size: 14px; line-height: 1.55; color: var(--text-3); }
+    .routes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .route { padding: 18px 20px; border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--radius); background: var(--surface); }
+    .route h3 { color: var(--c); }
+    .route .sub { margin: -4px 0 8px; font-size: 14px; color: var(--text-3); }
+    .route ol { margin: 0; padding-left: 1.25em; }
+    .route li { margin: 7px 0; font-size: 15.5px; line-height: 1.55; color: var(--text-2); }
+    .route.confident { --c: var(--confident); }
+    .route.uncertain { --c: var(--uncertain); }
+    .video-frame { max-width: 820px; margin-inline: auto; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .video-frame video { width: 100%; }
+    h3.block-title { margin-top: 36px; }
+    @media (max-width: 900px) { .component, .routes { grid-template-columns: minmax(0, 1fr); } .math .katex { font-size: 1em; } }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+    th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+    tbody tr:last-child > * { border-bottom: 0; }
+    thead th { background: var(--bg-soft); font-size: 13.5px; font-weight: 700; color: var(--text); }
+    th.ds, td.model, th.left, td.left { text-align: left; }
+    th.ds { font-weight: 500; vertical-align: middle; }
+    tr.group-start > * { border-top: 1px solid var(--line-2); }
+    thead th.ours, td.ours { background: var(--accent-soft); }
+    td.best { font-weight: 700; color: var(--text); }
+    td.ours.best { color: var(--ours-best); }
+    abbr[title] { text-decoration: none; border-bottom: 1px dotted var(--text-3); cursor: help; }
+    .table-note { margin: 10px 0 0; font-size: 14px; line-height: 1.55; color: var(--text-3); }
+    .split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; align-items: center; }
+    .split.top { align-items: start; }
+    .yes { color: var(--good); font-weight: 700; }
+    .no { color: var(--bad); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .card h3 { font-size: 17.5px; }
+    .card > p { font-size: 15.5px; color: var(--text-2); }
+    .card .table-wrap { box-shadow: none; }
+    .card table { font-size: 14px; }
+    .card th, .card td { padding: 7px 10px; }
+    @media (max-width: 980px) { .grid-3 { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 860px) { .split, .grid-2 { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 760px) {
+      table { font-size: 13.5px; } th, td { padding: 8px 9px; }
+      th.ds { white-space: normal; min-width: 5.5em; }
+      .card { padding: 16px; }
+      /* keep the MILES column in view while the baselines scroll */
+      .pin-ours th.ours, .pin-ours td.ours { position: sticky; right: 0; background: var(--ours-solid); box-shadow: inset 1px 0 0 var(--line-2); }
+      .bib pre { padding-top: 50px; }
     }
 
-    table{
-        font-size:13px;
-        font-variant-numeric:tabular-nums;
-    }
+    /* Case study */
+    .case { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+    .case-col { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); font-size: 15.5px; line-height: 1.6; color: var(--text-2); }
+    .case-col h4 { margin: 0 0 8px; font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+    .case-col .verdict { font-weight: 700; }
+    .case-col.bad h4, .case-col.bad .verdict { color: var(--bad); }
+    .case-col.good h4, .case-col.good .verdict { color: var(--good); }
+    .subinstr { margin: 10px 0; padding: 10px 12px; border-left: 3px solid var(--c-magenta); border-radius: 6px; background: var(--c-magenta-soft); color: var(--text); font-size: 15px; }
+    .subinstr b { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-magenta); }
+    .question { margin: 0 0 12px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--bg-soft); font-size: 16px; }
+    @media (max-width: 760px) { .case { grid-template-columns: minmax(0, 1fr); } }
 
-    td[rowspan]{
-        vertical-align:middle;
-        font-weight:600;
+    /* Citation */
+    .bib { position: relative; }
+    .bib pre {
+      margin: 0; padding: 18px 20px; overflow-x: auto;
+      background: var(--code-bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius);
+      font: 13.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
+    .copy {
+      position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+      color: var(--text-2); font: 500 13px/1.4 Roboto, system-ui, sans-serif; cursor: pointer;
+    }
+    .copy:hover, .copy.done { color: var(--accent); border-color: var(--accent-soft-2); }
 
-    .ablation-wrap {
-      width: 100%;
-      margin: 18px auto;
-      overflow-x: auto;
+    footer { margin-top: 72px; padding: 28px 0 44px; border-top: 1px solid var(--line); font-size: 14px; color: var(--text-3); text-align: center; }
+    footer p { margin: 4px 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; animation: none !important; }
     }
-    .ablation-grid {
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) !important;
-    }
-    .ablation-table {
-      width: 100%;
-      min-width: 0 !important;
-      table-layout: fixed;
-      font-size: 13px;
-    }
-    .ablation-table th, .ablation-table td {
-      padding: 8px 9px;
-    }
-    .ablation-figure img {
-      width: 65%;
-      max-width: 420px;
-      height: auto;
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-    @media (max-width: 980px) {
-      .ablation-grid { grid-template-columns: 1fr !important; }
+    @media print {
+      .nav, .progress, .theme-toggle, .copy, .skip-link { display: none !important; }
+      section { padding-top: 28px; }
     }
   </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="container nav-inner">
-      <a class="brand" href="#top">MILES</a>
-      <div class="nav-links">
-        <a href="#abstract">Abstract</a>
-        <a href="#method">Method</a>
-        <a href="#results">Results</a>
-        <a href="#citation">Citation</a>
-      </div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="MILES, back to top">
+        <img src="assets/favicon_192.png" alt="" width="28" height="28">
+        <span>MILES</span>
+      </a>
+      <nav class="nav-links" aria-label="Page sections">
+        <a href="#abstract" data-target="abstract">Abstract</a>
+        <a href="#method" data-target="method">Method</a>
+        <a href="#results" data-target="results">Results</a>
+        <a href="#analysis" data-target="analysis">Analysis</a>
+        <a href="#citation" data-target="citation">BibTeX</a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+      </nav>
     </div>
-  </nav>
+  </header>
 
-  <div style="display:flex; justify-content:center; align-items:center; gap:18px; margin-bottom:15px;">
-    <img src="assets/logo_v1.png"
-         alt="MILES Logo"
-         class="title-logo">
-
-    <div class="title-text">
-        <h1 class="title is-1" style="font-size:2.5rem;">
-            MILES: Modular Instruction Memory with Learnable<br>
-            Selection for Self-Improving LLM Reasoning
-        </h1>
-    </div>
-  </div>
-  <p class="subtitle">
-      A framework that incrementally constructs step-wise memory and learns
-      correctness-oriented memory composition for frozen LLM reasoning.
-  </p>
-  <div class="authors" style="text-align:center;"><strong>Ruilin Tong</strong>, <strong>Dong Gong</strong></div>
-      <div class="affiliation" style="text-align:center;">University of New South Wales (UNSW Sydney)</div>
-      <div class="buttons">
-        <a class="button primary" href="https://arxiv.org/abs/2607.06974">Paper</a>
-        <a class="button" href="https://github.com/Artificer-AI-Lab/MILES">Code</a>
-        <a class="button" href="#citation">BibTeX</a>
-      </div>
-      <p class="moram-related-works">
-        <span><strong>Please check out our other works</strong></span>
-        <span class="moram-related-works-links">
-          <a href="https://artificer-ai-lab.github.io/MoRAM/" target="_blank" rel="noopener noreferrer" title="MoRAM"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>MoRAM</span></a>
-          <a href="https://zhaoc5.github.io/DyMoE/" target="_blank" rel="noopener noreferrer" title="LLaVA-DyMoE (CVPR 2026)"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>LLaVA-DyMoE</span></a>
-          <a href="https://donggong1.github.io/projects/anomdec-memae/" target="_blank" rel="noopener noreferrer" title="MemAE"><span class="moram-related-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><span>MemAE</span></a>
-          <a href="https://arxiv.org/abs/2403.18886" target="_blank" rel="noopener noreferrer" title="SEMA (CVPR 2025)"><span class="moram-related-icon"><i class="ai ai-arxiv" aria-hidden="true"></i></span><span>SEMA</span></a>
-          <a href="https://github.com/RuilinTong/CSReL-Coreset-CL" target="_blank" rel="noopener noreferrer" title="CSReL"><span class="moram-related-icon"><i class="fa-brands fa-github" aria-hidden="true"></i></span><span>CSReL</span></a>
-        </span>
-      </p>
-  </div>
-  
-  <main>
-    <section>
-      <div class="container card">
-        <figure class="figure">
-          <!-- Put your teaser figure at: assets/teaser.png -->
-          <img src="assets/teaser.png" alt="Overview of MILES framework" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="placeholder" style="display:none;">Place teaser figure here:<br>assets/teaser.png</div>
-          <figcaption class="caption">MILES improves test-time reasoning by constructing memory and learning memory selection from confident samples, then applying the learned memory to guide reasoning on uncertain samples.</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section id="abstract">
-      <div class="container card">
-        <h2 class="section-title">Abstract</h2>
-        <p>Large language models increasingly improve their reasoning at test time via additional computation, yet most procedures treat each problem in isolation. When problems arrive sequentially, accumulating reusable experience across them can further improve performance. Existing memory-based methods either store whole-solution templates that generalize poorly to novel problems or use heuristic step-level selection that is not optimized for final-answer correctness.</p>
-        <p>We propose <strong>MILES</strong> (<strong>M</strong>odular <strong>I</strong>nstruction Memory with <strong>LE</strong>arnable <strong>S</strong>election for self-improving LLM reasoning), a framework that dynamically expands step-wise memory and applies correctness-optimized memory composition under realistic test-time constraints. MILES maintains modular memory units consisting of asymmetric pairs of sub-goal embeddings and sub-instructions, each associated with a learnable selection head.</p>
-        <p>This memory structure enables a coarse-to-fine retrieval mechanism: the coarse level enables memory expansion and collects supervision for training selection heads from confident samples, while the fine stage applies learned selection heads to rerank coarse-level candidates and guide reasoning for uncertain samples. Experiments across six reasoning benchmarks demonstrate the effectiveness, robustness, and transferability of MILES.</p>
-      </div>
-    </section>
-
-    <section id="motivation">
-      <div class="container card">
-        <h2 class="section-title">Why MILES?</h2>
-        <p class="lead">Existing test-time memory methods often retrieve whole solutions or rely on heuristic step-level selection. MILES turns memory reuse into learnable, step-wise composition.</p>
-        <div class="grid two">
-          <div class="mini-card">
-            <h3>Existing memory-based reasoning</h3>
-            <p><span class="bad">✗</span> Whole-solution retrieval generalizes poorly to novel problems.</p>
-            <p><span class="bad">✗</span> Step-level selection is often based on similarity or prompting.</p>
-            <p><span class="bad">✗</span> Selection is not directly optimized for final-answer correctness.</p>
-          </div>
-          <div class="mini-card">
-            <h3>MILES</h3>
-            <p><span class="good">✓</span> Modular step-wise memory.</p>
-            <p><span class="good">✓</span> Learnable memory selection.</p>
-            <p><span class="good">✓</span> Incremental memory expansion.</p>
-            <p><span class="good">✓</span> Frozen LLM, without parameter updates.</p>
-          </div>
+  <main id="main">
+    <!-- Title, TL;DR, authors, links -->
+    <section class="hero" id="top">
+      <div class="wrap">
+        <div class="title-row">
+          <img class="title-logo" src="assets/logo_v1.png" alt="MILES logo" width="720" height="720">
+          <h1><span class="name">MILES:</span> Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning</h1>
         </div>
-      </div>
-    </section>
 
-    <section id="video">
-      <div class="container card">
+        <p class="tldr"><span class="tldr-label">TL;DR</span>MILES lets a frozen LLM improve itself at test time from its own reasoning trajectories, without ground-truth labels. From problems it answers confidently, it extracts sub-goals and the sub-skills (sub-instructions) that achieve them into a modular memory, and it learns online when to read each memory unit, so that later, uncertain problems are solved by composing these sub-skills step by step.</p>
 
-        <h2 class="section-title">Method Overview</h2>
+        <div class="authors">
+          <span class="author"><a href="https://scholar.google.com/citations?user=VKSPaaEAAAAJ" target="_blank" rel="noopener noreferrer">Ruilin Tong</a>,</span>
+          <span class="author"><a href="https://donggong1.github.io/" target="_blank" rel="noopener noreferrer">Dong Gong</a><sup>*</sup></span>
+        </div>
+        <div class="affil">
+          <a href="https://donggong1.github.io/group/" target="_blank" rel="noopener noreferrer">Artificer AI Lab</a>, <a href="https://www.unsw.edu.au/" target="_blank" rel="noopener noreferrer">University of New South Wales (UNSW Sydney)</a>
+        </div>
+        <div class="note-small"><sup>*</sup>&thinsp;Corresponding author</div>
 
-        <p class="lead">
-          A short animation illustrating how MILES incrementally constructs
-          memory and applies learned memory selection during reasoning.
+        <div class="pills">
+          <a class="pill" href="https://arxiv.org/abs/2607.06974" target="_blank" rel="noopener noreferrer"><i class="ai ai-arxiv" aria-hidden="true"></i><span>arXiv</span></a>
+          <a class="pill" href="https://arxiv.org/pdf/2607.06974" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><span>PDF</span></a>
+          <a class="pill" href="https://github.com/Artificer-AI-Lab/MILES" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github" aria-hidden="true"></i><span>Code</span></a>
+          <a class="pill" href="#citation"><i class="fa-solid fa-quote-right" aria-hidden="true"></i><span>BibTeX</span></a>
+        </div>
+
+        <p class="others">
+          <strong>Please check out our other works</strong>
+          <span class="others-links">
+            <a href="https://artificer-ai-lab.github.io/MoRAM/" target="_blank" rel="noopener noreferrer" title="MoRAM"><i class="fa-solid fa-globe" aria-hidden="true"></i>MoRAM</a>
+            <a href="https://zhaoc5.github.io/DyMoE/" target="_blank" rel="noopener noreferrer" title="LLaVA-DyMoE (CVPR 2026)"><i class="fa-solid fa-globe" aria-hidden="true"></i>LLaVA-DyMoE</a>
+            <a href="https://donggong1.github.io/projects/anomdec-memae/" target="_blank" rel="noopener noreferrer" title="MemAE"><i class="fa-solid fa-globe" aria-hidden="true"></i>MemAE</a>
+            <a href="https://arxiv.org/abs/2403.18886" target="_blank" rel="noopener noreferrer" title="SEMA (CVPR 2025)"><i class="ai ai-arxiv" aria-hidden="true"></i>SEMA</a>
+            <a href="https://github.com/RuilinTong/CSReL-Coreset-CL" target="_blank" rel="noopener noreferrer" title="CSReL"><i class="fa-brands fa-github" aria-hidden="true"></i>CSReL</a>
+          </span>
         </p>
+      </div>
+    </section>
 
-        <figure class="figure">
+    <!-- Animated walkthrough (MoRAM-style): CSS-animated SVG, controlled through <object>.contentDocument -->
+    <section class="teaser" aria-label="Animated walkthrough">
+      <div class="wrap">
+        <figure class="figure wide walk">
+          <div class="frame walk-frame">
+            <object id="walk-svg" type="image/svg+xml" data="assets/miles_walkthrough.svg" aria-label="Animated walkthrough of MILES at test time: confident questions write new memory units and train per-unit selection heads from pseudo-labeled MCTS rollouts; uncertain questions read memory by sub-goal similarity (Layer 1) and learned-head reranking (Layer 2); memory grows while the LLM stays frozen.">
+              <img src="assets/teaser-1400.webp" width="1400" height="524" alt="Overview of MILES: confident questions write memory and train selection heads; uncertain questions read memory through memory-guided tree search.">
+            </object>
+          </div>
+          <div class="walk-controls" id="walk-controls" role="toolbar" aria-label="Animation controls" hidden>
+            <button type="button" class="walk-btn" data-action="prev" aria-label="Previous step"><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M11 2 L4 8 L11 14 Z" fill="currentColor"/></svg></button>
+            <button type="button" class="walk-btn walk-btn--play" data-action="toggle" aria-label="Pause"><svg class="i-pause" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="0.6" fill="currentColor"/><rect x="9.5" y="2.5" width="3" height="11" rx="0.6" fill="currentColor"/></svg><svg class="i-play" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M4 2 L13 8 L4 14 Z" fill="currentColor"/></svg></button>
+            <button type="button" class="walk-btn" data-action="next" aria-label="Next step"><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M5 2 L12 8 L5 14 Z" fill="currentColor"/></svg></button>
+            <span class="walk-divider" aria-hidden="true"></span>
+            <span class="walk-chips" role="group" aria-label="Jump to phase">
+              <button type="button" class="walk-chip" data-phase="0" aria-pressed="false">Route</button>
+              <button type="button" class="walk-chip" data-phase="1" aria-pressed="false">Write</button>
+              <button type="button" class="walk-chip" data-phase="2" aria-pressed="false">Read</button>
+              <button type="button" class="walk-chip" data-phase="3" aria-pressed="false">Grow</button>
+            </span>
+          </div>
+          <figcaption id="walk-caption"><b>Animated walkthrough.</b> A question whose K&nbsp;=&nbsp;10 answers agree goes to WRITE: MCTS rollouts scored against the pseudo-label add a memory unit and train the selection heads. A question whose answers disagree goes to READ: Layer&nbsp;1 retrieves units with similar sub-goals, the learned heads rerank them, and the chosen sub-instruction guides the next step. The numbers in the animation are illustrative. Use the controls to pause or to step through the phases.</figcaption>
+        </figure>
+      </div>
+    </section>
 
-          <video
-              controls
-              autoplay
-              muted
-              loop
-              playsinline
-              preload="metadata"
-              style="
-                  width:100%;
-                  max-width:1000px;
-                  border-radius:16px;
-                  border:1px solid var(--line);
-                  background:#ffffff;
-              ">
+    <section id="abstract" data-nav="abstract">
+      <div class="wrap">
+        <h2>Abstract</h2>
+        <div class="abstract">
+          <p>Large language models (LLMs) increasingly improve their reasoning at test time via additional computation, yet most existing works treat each problem in isolation. When problems arrive sequentially, accumulating reusable experience across them can further improve performance. Existing memory-based methods either store whole-solution templates that generalize poorly to novel problems or use heuristic step-level selection that is not optimized for final-answer correctness. Learning selection policies requires large-scale training data and fixed action spaces, making such approaches unsuitable for test-time settings where memory expands incrementally and only limited supervision is available.</p>
+          <p>We propose <strong>MILES</strong> (<strong>M</strong>odular <strong>I</strong>nstruction Memory with <strong>LE</strong>arnable <strong>S</strong>election for self-improving LLM reasoning), a framework that dynamically expands step-wise memory and applies correctness-optimized memory composition under realistic test-time constraints. MILES maintains modular memory units consisting of asymmetric pairs of sub-goal embeddings and sub-instructions, each associated with a learnable selection head. This memory structure enables a coarse-to-fine retrieval mechanism: The coarse level enables memory expansion and collects supervision for training selection heads from confident samples, while the fine stage applies learned selection heads to rerank coarse-level candidates and guide reasoning for uncertain samples.</p>
+          <p>MILES consistently matches or outperforms prior methods while achieving superior accuracy&ndash;efficiency tradeoffs. Extensive experiments demonstrate its effectiveness, robustness, and transferability.</p>
+        </div>
 
-              <source
-                  src="assets/method_procedure_v2.mp4"
-                  type="video/mp4">
-    
-              Your browser does not support the video tag.
+        <div class="callouts">
+          <div class="callout teal">
+            <div class="k">No ground-truth labels</div>
+            When the K&nbsp;=&nbsp;10 initial responses to a question agree, their majority answer serves as the pseudo-label for scoring rollouts.
+          </div>
+          <div class="callout magenta">
+            <div class="k">Frozen LLM</div>
+            The LLM's parameters are never updated. Only lightweight per-unit selection heads (small MLPs) are trained.
+          </div>
+          <div class="callout orange">
+            <div class="k">Memory grows during testing</div>
+            Each new memory unit comes with its own selection head, so memory can grow along the test stream without retraining existing heads.
+          </div>
+        </div>
+      </div>
+    </section>
 
-          </video>
+    <section id="motivation" data-nav="abstract">
+      <div class="wrap">
+        <p class="eyebrow">Motivation</p>
+        <h2>Why MILES?</h2>
+        <p class="lead">Prior test-time memory methods retrieve whole solutions, or they choose step-level units by similarity or by prompting. MILES makes step-wise memory composition a learned decision that is optimized for final-answer correctness.</p>
+        <div class="compare">
+          <div class="card">
+            <h3>Existing memory-based reasoning</h3>
+            <ul class="checklist bad">
+              <li>Whole-solution templates generalize poorly to problems with novel structure.</li>
+              <li>Step-level units are selected heuristically, by similarity retrieval or by prompting the LLM.</li>
+              <li>The selection is not optimized for final-answer correctness.</li>
+              <li>Methods that learn selection need fixed action spaces, external labeled data, or fine-tuning.</li>
+            </ul>
+          </div>
+          <div class="card ours-card">
+            <h3>MILES</h3>
+            <ul class="checklist good">
+              <li>Modular step-level memory of (sub-goal, sub-instruction) pairs that can be composed across problems.</li>
+              <li>A learned selection head for every memory unit, trained on rollout correctness.</li>
+              <li>Memory expands incrementally from the model's own confident trajectories.</li>
+              <li>No LLM parameter updates, no ground-truth labels, and no fixed action space.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
 
-          <figcaption class="caption">
-            Overview of the MILES framework.
-          </figcaption>
+    <!-- Method -->
+    <section id="method" data-nav="method">
+      <div class="wrap">
+        <p class="eyebrow">Method</p>
+        <h2>How MILES works</h2>
+        <p class="lead">Each incoming question is routed by answer agreement. Confident questions <em>write</em>: they expand the memory and supply training data for the selection heads. Uncertain questions <em>read</em>: they retrieve memory units coarse-to-fine and use them to guide a tree search.</p>
 
+        <figure class="figure wide">
+          <a class="frame" href="assets/teaser.png" target="_blank" rel="noopener" title="Open the full-resolution figure">
+            <picture>
+              <source type="image/webp" srcset="assets/teaser-800.webp 800w, assets/teaser-1400.webp 1400w, assets/teaser-2200.webp 2200w" sizes="(max-width: 1032px) calc(100vw - 58px), 958px">
+              <img src="assets/teaser.png" width="5297" height="1981" loading="lazy" decoding="async"
+                   alt="Overview of MILES: confident questions write memory and train selection heads; uncertain questions read memory through memory-guided tree search.">
+            </picture>
+          </a>
+          <figcaption><b>Figure 1.</b> Overview of MILES. MILES improves test-time reasoning by constructing memory and learning memory selection from confident samples, then applying the learned memory to guide reasoning on uncertain samples.</figcaption>
         </figure>
 
+        <figure class="figure wide" style="margin-top:28px">
+          <a class="frame" href="assets/miles_method.svg" target="_blank" rel="noopener" title="Open the diagram at full size">
+            <img src="assets/miles_method.svg" width="1200" height="986" loading="lazy" decoding="async"
+                 alt="Technical diagram of MILES: routing by answer agreement, memory writing on confident questions, coarse-to-fine memory reading on uncertain questions, and the selection-head objective.">
+          </a>
+          <figcaption><b>Technical overview.</b> Answer agreement routes each question. On the WRITE path, confident questions grow the memory and train per-unit selection heads from pseudo-labeled MCTS rollouts. On the READ path, uncertain questions compose sub-instructions through coarse-to-fine retrieval inside a memory-guided tree search. The bottom strip shows the selection objective and the per-unit BCE surrogate used to train the heads. Notation and hyperparameters follow the paper.</figcaption>
+          <div class="fig-actions"><a href="assets/miles_method.svg" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i>Open the diagram at full size</a></div>
+        </figure>
+
+        <div class="components">
+          <div class="component">
+            <div>
+              <h3><span class="num">1</span>Modular memory units</h3>
+              <p>A memory unit is an asymmetric pair. The <strong>sub-goal</strong> \(g_i\) is an embedding of what the step should achieve and serves as the retrieval key. The <strong>sub-instruction</strong> \(u_i\) is a short natural-language directive that conditions generation. Each unit has its own selection head, so new units can be added without retraining existing ones.</p>
+              <p>Units are summarized from (reasoning step, step-goal) pairs collected on confident trajectories. The pairs are clustered with k-means, the LLM writes one generalized sub-instruction per cluster, and the mean step-goal embedding becomes the sub-goal.</p>
+            </div>
+            <div class="math">
+              \[\mathcal{M}=\{(g_i,u_i)\}_{i=1}^{N},\qquad g_i\in\mathbb{R}^{d}\]
+              \[d=1-\cos(\mathbf{s}_1,\mathbf{s}_2)+\alpha_{\text{sum}}\big[1-\cos(\mathbf{o}_1,\mathbf{o}_2)\big]\]
+              \[R^{(i)}_{\text{effect}}=\alpha_{\text{eff}}\cdot\bar{d}_i\]
+              <p class="where"><span class="nw">\(\mathbf{s},\mathbf{o}\):</span> step and step-goal embeddings. <span class="nw">\(N\) grows as experience accumulates. \(\bar{d}_i\),</span> the mean distance within unit \(i\)'s cluster, sets its effective threshold, so units from looser clusters apply more broadly.</p>
+            </div>
+          </div>
+
+          <div class="component">
+            <div>
+              <h3><span class="num">2</span>Coarse-to-fine selection</h3>
+              <p><strong>Layer 1 (coarse).</strong> The LLM proposes step-goals for the next step. Each step-goal embedding \(\hat g\) retrieves the stored sub-goals with the highest cosine similarity, and units beyond their effective threshold are excluded. If no unit matches, the LLM writes the step directly and the pair is kept as a seed for new units.</p>
+              <p><strong>Layer 2 (fine).</strong> Each candidate's learned head scores how applicable it is in the current state <span class="nw">\(x\).</span> The state is split into overlapping chunks, and the unit's context codebook turns it into a fixed-length feature vector by max-similarity pooling.</p>
+            </div>
+            <div class="math">
+              \[\mathbf{m}_a(x)=[s_{a1},\dots,s_{an}],\qquad s_{ai}=\max_{j\in[1,T]}\cos(\mathbf{q}_{ai},\mathbf{c}_j)\]
+              \[\pi_{\theta_a}(a\mid x)=f_{\theta_a}\big(\mathbf{m}_a(x)\big)\in[0,1]\]
+              \[\operatorname{score}(a,x)=(1-\beta_{\text{c2f}})\cos(\hat g,g_a)+\beta_{\text{c2f}}\,\pi_{\theta_a}(a\mid x)\]
+              <p class="where"><span class="nw">\(\mathbf{q}_{ai}\):</span> context prototypes for unit <span class="nw">\(a\).</span> <span class="nw">\(\mathbf{c}_j\):</span> chunk embeddings of <span class="nw">\(x\).</span> The top-scoring unit's sub-instruction guides the next step. \(\beta_{\text{c2f}}=0\) on math benchmarks (heads only) and 0.4&ndash;0.6 on academic ones.</p>
+            </div>
+          </div>
+
+          <div class="component">
+            <div>
+              <h3><span class="num">3</span>Learning the selection heads</h3>
+              <p>Choosing unit <span class="nw">\(a\) at state \(x\) should maximize the probability of a correct final answer. With a KL penalty toward the Layer-1 sampling policy \(\pi_{\text{sim}}\),</span> the optimal policy has the same closed form as in advantage-weighted regression (Peng et al., 2019).</p>
+              <p>MILES approximates this optimum with one lightweight one-vs-rest classifier per unit, an ensemble of 10 three-layer MLPs, trained with binary cross-entropy on labels from MCTS rollouts on confident samples. Positives are states where applying \(a\) reached the pseudo-label answer. Negatives are states where \(a\) led to a wrong answer, or where a different unit succeeded.</p>
+            </div>
+            <div class="math">
+              \[\max_{\pi}\;p_m(y^{*}\mid x)=\sum_a\pi(a\mid x)\,V(x,a)\]
+              \[\pi^{*}(a\mid x)=\frac{1}{Z(x)}\,\pi_{\text{sim}}(a\mid x)\,\exp\!\big(V(x,a)/\beta\big)\]
+              \[\ell_a=-\big[r_a\log\pi_{\theta_a}(a\mid x)+(1-r_a)\log\big(1-\pi_{\theta_a}(a\mid x)\big)\big]\]
+              <p class="where"><span class="nw">\(V(x,a)\):</span> expected correctness of the final answer after applying <span class="nw">\(a\) at \(x\).</span> <span class="nw">\(r_a\in\{0,1\}\):</span> whether the rollout reached the pseudo-label. The one-vs-rest design lets each head be trained independently as memory grows.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="block-title">Test-time pipeline</h3>
+        <div class="routes">
+          <div class="route confident">
+            <h3>Confident question &rarr; write</h3>
+            <p class="sub">The initial responses agree on an answer.</p>
+            <ol>
+              <li>The majority answer becomes the pseudo-label <span class="nw">\(\hat y\).</span> It is also the output for this question.</li>
+              <li>MCTS explores reasoning states (20&ndash;40 rollouts). Expansions choose units by Layer-1 similarity only, so the collected data is not biased toward the current heads.</li>
+              <li>Each expansion is labeled by whether its rollout reaches <span class="nw">\(\hat y\),</span> and the (state, label) pair is added to that unit's dataset <span class="nw">\(\mathcal{D}_a\).</span></li>
+              <li>Seeds are summarized into new memory units, and the affected heads are retrained on all data collected so far.</li>
+            </ol>
+          </div>
+          <div class="route uncertain">
+            <h3>Uncertain question &rarr; read</h3>
+            <p class="sub">The initial responses disagree, so there is no reliable pseudo-label and no MCTS.</p>
+            <ol>
+              <li>A multi-stage tree search keeps a pool of responses. Each stage samples existing reasoning chains and truncates them, using longer prefixes at later stages.</li>
+              <li>The LLM proposes step-goals. Layer 1 retrieves 16 candidate units, and the Layer-2 heads rerank them.</li>
+              <li>The top unit's sub-instruction guides the next step, the LLM completes the reasoning, and the response joins the pool.</li>
+              <li>The final answer is the majority vote over all responses in the pool.</li>
+            </ol>
+          </div>
+        </div>
+
+        <h3 class="block-title">Animated overview</h3>
+        <p class="muted" style="font-size:15.5px;text-align:center">A short animation of how MILES incrementally constructs memory and applies learned memory selection during reasoning.</p>
+        <div class="video-frame">
+          <video controls autoplay muted loop playsinline preload="metadata" width="1920" height="1080" poster="assets/method_video_poster.jpg" aria-label="Animated overview of the MILES framework">
+            <source src="assets/method_procedure_v2.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
       </div>
     </section>
 
-    <section id="method">
-      <div class="container card">
-        <h2 class="section-title">Method</h2>
-        <p class="lead">MILES organizes reusable reasoning experience as modular instruction memory and applies a two-layer selection mechanism to guide uncertain reasoning cases.</p>
-        <div class="grid three">
-          <div class="mini-card">
-            <h3>1. Modular memory</h3>
-            <div class="formula">(sub-goal embedding, sub-instruction)</div>
-            <p>The sub-goal embedding acts as a retrieval key, while the sub-instruction provides natural-language guidance for generation.</p>
-          </div>
-          <div class="mini-card">
-            <h3>2. Coarse-to-fine selection</h3>
-            <p><strong>Layer 1:</strong> similarity-based retrieval expands memory and collects data.</p>
-            <p><strong>Layer 2:</strong> learned selection heads rerank candidate memory units by applicability.</p>
-          </div>
-          <div class="mini-card">
-            <h3>3. Self-improvement</h3>
-            <p>Confident samples provide pseudo-supervision for memory expansion and selection-head learning, which later guides uncertain samples.</p>
-          </div>
-        </div>
-        <div class="flow">
-          <span>Confident samples</span><b>→</b><span>Memory construction</span><b>→</b><span>Selection-head learning</span><b>→</b><span>Uncertain-sample reasoning</span>
-        </div>
-      </div>
-    </section>
-
-    <section id="results">
-      <div class="container card">
-        <h2 class="section-title">Main Results</h2>
-        <p class="lead">MILES consistently matches or outperforms prior methods across six reasoning benchmarks and four frozen backbones.</p>
-        <div class="table-wrap">
-          <table aria-label="Final-answer accuracy on six reasoning benchmarks">
-            <thead><tr><th class="dataset">Dataset</th><th class="model">Model</th><th>ZS-CoT</th><th>SC</th><th>DC</th><th>BoT</th><th>Ours</th></tr></thead>
+    <!-- Results -->
+    <section id="results" data-nav="results">
+      <div class="wrap">
+        <p class="eyebrow">Results</p>
+        <h2>Main results</h2>
+        <p class="lead">Across the 22 benchmark&ndash;backbone settings, MILES has the best accuracy in 17 and ties for the best in 4. The one exception is AIME&nbsp;2025 with GPT-4.1, where Dynamic Cheatsheet (DC) scores 50.00 against 40.00 for MILES. DC's strong AIME results come mainly from its use of code execution.</p>
+        <div class="table-wrap pin-ours">
+          <table aria-label="Table 1: final-answer accuracy (%) on six reasoning benchmarks with four frozen backbones">
+            <thead>
+              <tr>
+                <th scope="col" class="left">Dataset</th>
+                <th scope="col" class="left">Model</th>
+                <th scope="col"><abbr title="Zero-shot chain-of-thought">ZS-CoT</abbr></th>
+                <th scope="col"><abbr title="Self-Consistency">SC</abbr></th>
+                <th scope="col"><abbr title="Dynamic Cheatsheet">DC</abbr></th>
+                <th scope="col"><abbr title="Buffer of Thoughts">BoT</abbr></th>
+                <th scope="col" class="ours">MILES</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><td class="dataset" rowspan="2">MATH-500</td><td class="model">GPT-4.1-mini</td><td>88.00</td><td>89.40</td><td>87.00</td><td>86.80</td><td class="ours best">92.60</td></tr>
+              <tr class="group-start"><th scope="rowgroup" rowspan="2" class="ds">MATH-500</th><td class="model">GPT-4.1-mini</td><td>88.00</td><td>89.40</td><td>87.00</td><td>86.80</td><td class="ours best">92.60</td></tr>
               <tr><td class="model">GPT-4.1</td><td>87.20</td><td>88.00</td><td>83.20</td><td>84.80</td><td class="ours best">91.60</td></tr>
-              <tr><td class="dataset" rowspan="4">AIME 2024</td><td class="model">GPT-4.1-mini</td><td>46.67</td><td>56.67</td><td>63.33</td><td>50.00</td><td class="ours best">66.67</td></tr>
-              <tr><td class="model">GPT-4.1</td><td>40.00</td><td>50.00</td><td>53.33</td><td>50.00</td><td class="ours best">53.33</td></tr>
+              <tr class="group-start"><th scope="rowgroup" rowspan="4" class="ds">AIME 2024</th><td class="model">GPT-4.1-mini</td><td>46.67</td><td>56.67</td><td>63.33</td><td>50.00</td><td class="ours best">66.67</td></tr>
+              <tr><td class="model">GPT-4.1</td><td>40.00</td><td>50.00</td><td class="best">53.33</td><td>50.00</td><td class="ours best">53.33</td></tr>
               <tr><td class="model">GPT-OSS-20B</td><td>83.33</td><td class="best">93.33</td><td>43.33</td><td>50.00</td><td class="ours best">93.33</td></tr>
               <tr><td class="model">Qwen3-30B-Instruct</td><td>70.00</td><td>83.33</td><td>23.33</td><td>63.33</td><td class="ours best">86.67</td></tr>
-              <tr><td class="dataset" rowspan="4">AIME 2025</td><td class="model">GPT-4.1-mini</td><td>46.67</td><td>53.33</td><td>60.00</td><td>40.00</td><td class="ours best">60.00</td></tr>
+              <tr class="group-start"><th scope="rowgroup" rowspan="4" class="ds">AIME 2025</th><td class="model">GPT-4.1-mini</td><td>46.67</td><td>53.33</td><td class="best">60.00</td><td>40.00</td><td class="ours best">60.00</td></tr>
               <tr><td class="model">GPT-4.1</td><td>33.33</td><td>36.67</td><td class="best">50.00</td><td>33.33</td><td class="ours">40.00</td></tr>
               <tr><td class="model">GPT-OSS-20B</td><td>86.67</td><td>90.00</td><td>36.67</td><td>33.33</td><td class="ours best">93.33</td></tr>
               <tr><td class="model">Qwen3-30B-Instruct</td><td>60.00</td><td>70.00</td><td>30.00</td><td>53.33</td><td class="ours best">73.33</td></tr>
-              <tr><td class="dataset" rowspan="4">GPQA-Diamond</td><td class="model">GPT-4.1-mini</td><td>70.20</td><td>71.72</td><td>63.64</td><td>66.67</td><td class="ours best">73.23</td></tr>
+              <tr class="group-start"><th scope="rowgroup" rowspan="4" class="ds">GPQA-Diamond</th><td class="model">GPT-4.1-mini</td><td>70.20</td><td>71.72</td><td>63.64</td><td>66.67</td><td class="ours best">73.23</td></tr>
               <tr><td class="model">GPT-4.1</td><td>68.94</td><td>68.69</td><td>64.65</td><td>61.11</td><td class="ours best">70.71</td></tr>
               <tr><td class="model">GPT-OSS-20B</td><td>68.18</td><td>71.72</td><td>61.62</td><td>37.37</td><td class="ours best">74.24</td></tr>
               <tr><td class="model">Qwen3-30B-Instruct</td><td>70.20</td><td>72.23</td><td>42.42</td><td>67.68</td><td class="ours best">73.74</td></tr>
-              <tr><td class="dataset" rowspan="4">MMLU-Pro Physics</td><td class="model">GPT-4.1-mini</td><td>82.00</td><td>83.50</td><td>83.50</td><td>83.00</td><td class="ours best">85.00</td></tr>
+              <tr class="group-start"><th scope="rowgroup" rowspan="4" class="ds">MMLU-Pro Physics</th><td class="model">GPT-4.1-mini</td><td>82.00</td><td>83.50</td><td>83.50</td><td>83.00</td><td class="ours best">85.00</td></tr>
               <tr><td class="model">GPT-4.1</td><td>81.00</td><td>83.00</td><td>78.00</td><td>84.00</td><td class="ours best">84.50</td></tr>
               <tr><td class="model">GPT-OSS-20B</td><td>85.50</td><td>86.50</td><td>79.00</td><td>42.00</td><td class="ours best">87.00</td></tr>
               <tr><td class="model">Qwen3-30B-Instruct</td><td>87.00</td><td class="best">88.50</td><td>63.50</td><td>86.00</td><td class="ours best">88.50</td></tr>
-              <tr><td class="dataset" rowspan="4">MMLU-Pro Engineering</td><td class="model">GPT-4.1-mini</td><td>65.50</td><td>73.50</td><td>67.50</td><td>70.50</td><td class="ours best">75.00</td></tr>
+              <tr class="group-start"><th scope="rowgroup" rowspan="4" class="ds">MMLU-Pro Engineering</th><td class="model">GPT-4.1-mini</td><td>65.50</td><td>73.50</td><td>67.50</td><td>70.50</td><td class="ours best">75.00</td></tr>
               <tr><td class="model">GPT-4.1</td><td>75.50</td><td>78.50</td><td>72.00</td><td>67.50</td><td class="ours best">80.00</td></tr>
               <tr><td class="model">GPT-OSS-20B</td><td>68.50</td><td>70.00</td><td>66.50</td><td>41.50</td><td class="ours best">71.00</td></tr>
               <tr><td class="model">Qwen3-30B-Instruct</td><td>74.50</td><td>78.00</td><td>52.00</td><td>75.50</td><td class="ours best">81.00</td></tr>
             </tbody>
           </table>
         </div>
-        <p class="note">Final-answer accuracy (%) on six reasoning benchmarks. Per-row best results are bolded.</p>
-      </div>
-    </section>
+        <p class="table-note"><b>Table 1.</b> Final-answer accuracy (%). Bold marks the best result in each row, including ties. The same backbone is used for reasoning and for memory construction within each row. MMLU-Pro subsets use 200 randomly sampled questions each; the other benchmarks are evaluated in full.</p>
 
-    <section>
-      <div class="container card">
-        <h2 class="section-title">Accuracy–Efficiency Tradeoff</h2>
-        <div class="tradeoff-layout">
-          <figure class="figure tradeoff-figure">
-            <!-- Put your accuracy-token figure at: assets/accuracy_tokens.png -->
-            <img src="assets/accuracy_tokens.png" alt="Accuracy versus response-token cost" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="placeholder" style="display:none;">Place accuracy-token figure here:<br>assets/accuracy_tokens.png</div>
+        <h3 class="block-title">Accuracy&ndash;efficiency tradeoff</h3>
+        <div class="split">
+          <figure class="figure">
+            <a class="frame" href="assets/fig_acc_tokens.svg" target="_blank" rel="noopener" title="Open the figure at full size">
+              <img src="assets/fig_acc_tokens.svg" width="683" height="306" loading="lazy" decoding="async"
+                   alt="Scatter plots of accuracy versus response tokens (millions) on AIME 2024 and AIME 2025 with GPT-4.1-mini. MILES points lie above CoT-SC, ToT, rStar, and DORA at every budget and keep rising with more tokens.">
+            </a>
+            <figcaption><b>Figure 2.</b> Accuracy vs. response-token cost on AIME 2024 and AIME 2025 with GPT-4.1-mini.</figcaption>
           </figure>
-          <div class="tradeoff-copy">
-            <p class="lead">MILES achieves a strong accuracy-token tradeoff compared with Self-Consistency, Tree-of-Thoughts, rStar, and DORA.</p>
-            <p class="caption">MILES dominates the frontier across evaluated token budgets while baselines flatten at higher budgets.</p>
+          <div>
+            <p class="lead" style="margin-bottom:12px">On both datasets, every MILES run is at least as accurate as every baseline run. MILES also keeps improving as the token budget grows, while Self-Consistency, Tree-of-Thoughts, rStar, and DORA level off.</p>
+            <p class="muted" style="font-size:15.5px;margin:0">More compute helps MILES because extra MCTS rollouts on confident questions build additional memory units (Table&nbsp;5). Reusing cross-problem memory captures knowledge that per-problem scaling alone cannot.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="transferability">
-      <div class="container card">
-        <h2 class="section-title">Transferability and Reuse</h2>
-        <p class="lead">MILES memory can be reused across models and can also be pre-built from separate labeled training sets, showing that the learned memory captures transferable reasoning knowledge.</p>
-
-        <div class="grid two transfer-grid">
-          <div class="mini-card">
+    <section id="transfer" data-nav="results">
+      <div class="wrap">
+        <p class="eyebrow">Transferability</p>
+        <h2>Memory transfers across models and from offline data</h2>
+        <p class="lead">The memory is textual, so it does not have to be built by the reasoning model itself. It can also be prepared ahead of time from a separate labeled set.</p>
+        <div class="grid-2">
+          <div class="card">
             <h3>Cross-model transfer</h3>
-            <p>Memory built from rollouts of an auxiliary model improves GPT-4.1-mini reasoning on AIME 2024 and AIME 2025.</p>
-            <div class="table-wrap compact-table">
-              <table aria-label="Cross-model transfer results">
-                <thead>
-                  <tr>
-                    <th class="dataset">Dataset</th>
-                    <th class="model">Auxiliary model</th>
-                    <th class="ours">Accuracy</th>
-                  </tr>
-                </thead>
+            <p>GPT-4.1-mini is the reasoning backbone and produces the first 10 self-consistency rollouts used for routing. An auxiliary model produces the next 40 rollouts, which are used to build the memory.</p>
+            <div class="table-wrap">
+              <table aria-label="Table 2: cross-model transfer">
+                <thead><tr><th scope="col" class="left">Dataset</th><th scope="col" class="left">Auxiliary model</th><th scope="col" class="ours">Accuracy</th></tr></thead>
                 <tbody>
-                  <tr><td class="dataset" rowspan="4">AIME 2024</td><td class="model">no-auxiliary model</td><td class="ours">60.00</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="4" class="ds">AIME 2024</th><td class="model">no auxiliary model</td><td class="ours">60.00</td></tr>
                   <tr><td class="model">Qwen3-30B-Instruct</td><td class="ours best">66.67</td></tr>
                   <tr><td class="model">Qwen3-4B-Instruct</td><td class="ours">63.33</td></tr>
                   <tr><td class="model">GPT-4.1-mini</td><td class="ours best">66.67</td></tr>
-                  <tr><td class="dataset" rowspan="4">AIME 2025</td><td class="model">no-auxiliary model</td><td class="ours">50.00</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="4" class="ds">AIME 2025</th><td class="model">no auxiliary model</td><td class="ours">50.00</td></tr>
                   <tr><td class="model">Qwen3-30B-Instruct</td><td class="ours best">60.00</td></tr>
                   <tr><td class="model">Qwen3-4B-Instruct</td><td class="ours">56.67</td></tr>
                   <tr><td class="model">GPT-4.1-mini</td><td class="ours best">60.00</td></tr>
                 </tbody>
               </table>
             </div>
-            <p class="note">Accuracy (%) with GPT-4.1-mini as the reasoning backbone. Top row in each block is the no-auxiliary baseline.</p>
+            <p class="table-note"><b>Table 2.</b> Accuracy (%). Memory built by each auxiliary model, including the 4B-parameter Qwen3-4B-Instruct, improves on the no-auxiliary baseline.</p>
           </div>
-
-          <div class="mini-card">
+          <div class="card">
             <h3>Pre-built memory</h3>
-            <p>Memory pre-built on separate training sets improves the most uncertain test samples on AIME 2025 and GPQA-Diamond.</p>
-            <div class="table-wrap compact-table">
-              <table aria-label="Pre-built memory transfer results">
-                <thead>
-                  <tr>
-                    <th class="dataset">Dataset</th>
-                    <th class="model">Auxiliary model</th>
-                    <th class="ours">Accuracy</th>
-                  </tr>
-                </thead>
+            <p>An auxiliary model builds the memory ahead of time on a separate labeled set: AIME 2020&ndash;2024 for AIME 2025, and the non-Diamond GPQA split for GPQA-Diamond. The memory is then applied to the 13 and 31 most uncertain test questions.</p>
+            <div class="table-wrap">
+              <table aria-label="Table 3: pre-built memory">
+                <thead><tr><th scope="col" class="left">Dataset</th><th scope="col" class="left">Auxiliary model</th><th scope="col" class="ours">Accuracy</th></tr></thead>
                 <tbody>
-                  <tr><td class="dataset" rowspan="3">AIME 2025</td><td class="model">no memory</td><td class="ours">23.08</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="3" class="ds">AIME 2025</th><td class="model">no memory</td><td class="ours">23.08</td></tr>
                   <tr><td class="model">Qwen3-30B-Instruct</td><td class="ours">30.77</td></tr>
                   <tr><td class="model">GPT-4.1-mini</td><td class="ours best">38.46</td></tr>
-                  <tr><td class="dataset" rowspan="3">GPQA-Diamond</td><td class="model">no memory</td><td class="ours">48.39</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="3" class="ds">GPQA-Diamond</th><td class="model">no memory</td><td class="ours">48.39</td></tr>
                   <tr><td class="model">Qwen3-30B-Instruct</td><td class="ours best">58.06</td></tr>
                   <tr><td class="model">GPT-4.1-mini</td><td class="ours">54.84</td></tr>
                 </tbody>
               </table>
             </div>
-            <p class="note">Accuracy (%) with GPT-4.1-mini as the reasoning backbone. Memory is pre-built from AIME 2020–2024 or non-Diamond GPQA.</p>
+            <p class="table-note"><b>Table 3.</b> Accuracy (%) on the most uncertain test questions, with GPT-4.1-mini as the reasoning backbone.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="ablation">
-      <div class="container card">
-        <h2 class="section-title">Ablation and Selection Quality</h2>
-        <p class="lead">Table 4 verifies the contribution of the two-layer memory selection mechanism, while Figure 3 further analyzes the relation between sub-instruction correctness and final-answer accuracy.</p>
-
-        <div class="grid two ablation-grid">
-          <div class="mini-card">
-            <h3>Table 4. Ablation Study</h3>
-            <p>Incorporating the learned Layer 2 selection head consistently improves performance over retrieval-only or alternative reranking strategies.</p>
-            <div class="table-wrap ablation-wrap">
-              <table class="ablation-table" aria-label="Ablation study of memory selection components">
-                <colgroup>
-                  <col style="width: 22%;">
-                  <col style="width: 11%;">
-                  <col style="width: 16%;">
-                  <col style="width: 29%;">
-                  <col style="width: 22%;">
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th class="dataset">Dataset</th>
-                    <th>Exp.</th>
-                    <th>Layer&nbsp;1</th>
-                    <th>Layer&nbsp;2</th>
-                    <th class="ours">Accuracy</th>
-                  </tr>
-                </thead>
+    <section id="ablation" data-nav="results">
+      <div class="wrap">
+        <p class="eyebrow">Ablation</p>
+        <h2>Removing either selection layer lowers accuracy</h2>
+        <div class="split top">
+          <div>
+            <div class="table-wrap">
+              <table aria-label="Table 4: ablation of the memory selection components">
+                <thead><tr><th scope="col" class="left">Dataset</th><th scope="col">Exp.</th><th scope="col">Layer 1</th><th scope="col">Layer 2</th><th scope="col" class="ours">Accuracy</th></tr></thead>
                 <tbody>
-                  <tr><td class="dataset" rowspan="6">AIME 2024</td><td>1</td><td>✗</td><td>✗</td><td class="ours">60.00</td></tr>
-                  <tr><td>2</td><td>✓</td><td>✗</td><td class="ours">63.33</td></tr>
-                  <tr><td>3</td><td>✗</td><td>✓</td><td class="ours">63.33</td></tr>
-                  <tr><td>4</td><td>✓</td><td>✓</td><td class="ours best">66.67</td></tr>
-                  <tr><td>5</td><td>✓</td><td>State sim.</td><td class="ours">63.33</td></tr>
-                  <tr><td>6</td><td>✓</td><td>LLM rerank</td><td class="ours">60.00</td></tr>
-                  <tr><td class="dataset" rowspan="6">AIME 2025</td><td>1</td><td>✗</td><td>✗</td><td class="ours">53.33</td></tr>
-                  <tr><td>2</td><td>✓</td><td>✗</td><td class="ours">53.33</td></tr>
-                  <tr><td>3</td><td>✗</td><td>✓</td><td class="ours">56.67</td></tr>
-                  <tr><td>4</td><td>✓</td><td>✓</td><td class="ours best">60.00</td></tr>
-                  <tr><td>5</td><td>✓</td><td>State sim.</td><td class="ours">56.67</td></tr>
-                  <tr><td>6</td><td>✓</td><td>LLM rerank</td><td class="ours">53.33</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="6" class="ds">AIME 2024</th><td>1</td><td><span class="no" aria-label="off">&#10005;</span></td><td><span class="no" aria-label="off">&#10005;</span></td><td class="ours">60.00</td></tr>
+                  <tr><td>2</td><td><span class="yes" aria-label="on">&#10003;</span></td><td><span class="no" aria-label="off">&#10005;</span></td><td class="ours">63.33</td></tr>
+                  <tr><td>3</td><td><span class="no" aria-label="off">&#10005;</span></td><td><span class="yes" aria-label="on">&#10003;</span></td><td class="ours">63.33</td></tr>
+                  <tr><td>4</td><td><span class="yes" aria-label="on">&#10003;</span></td><td><span class="yes" aria-label="on">&#10003;</span></td><td class="ours best">66.67</td></tr>
+                  <tr><td>5</td><td><span class="yes" aria-label="on">&#10003;</span></td><td>State sim.</td><td class="ours">63.33</td></tr>
+                  <tr><td>6</td><td><span class="yes" aria-label="on">&#10003;</span></td><td>LLM rerank</td><td class="ours">60.00</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="6" class="ds">AIME 2025</th><td>1</td><td><span class="no" aria-label="off">&#10005;</span></td><td><span class="no" aria-label="off">&#10005;</span></td><td class="ours">53.33</td></tr>
+                  <tr><td>2</td><td><span class="yes" aria-label="on">&#10003;</span></td><td><span class="no" aria-label="off">&#10005;</span></td><td class="ours">53.33</td></tr>
+                  <tr><td>3</td><td><span class="no" aria-label="off">&#10005;</span></td><td><span class="yes" aria-label="on">&#10003;</span></td><td class="ours">56.67</td></tr>
+                  <tr><td>4</td><td><span class="yes" aria-label="on">&#10003;</span></td><td><span class="yes" aria-label="on">&#10003;</span></td><td class="ours best">60.00</td></tr>
+                  <tr><td>5</td><td><span class="yes" aria-label="on">&#10003;</span></td><td>State sim.</td><td class="ours">56.67</td></tr>
+                  <tr><td>6</td><td><span class="yes" aria-label="on">&#10003;</span></td><td>LLM rerank</td><td class="ours">53.33</td></tr>
                 </tbody>
               </table>
             </div>
-            <p class="note">Layer 1 retrieval and Layer 2 learned selection jointly provide the best performance.</p>
+            <p class="table-note"><b>Table 4.</b> Accuracy (%) with GPT-4.1-mini. Exp. 5 and 6 replace the learned heads with state-similarity reranking or LLM-prompt reranking.</p>
           </div>
-
-          <div class="mini-card">
-            <h3>Figure 3. Selection Quality Analysis</h3>
-            <p>Higher sub-instruction correctness aligns with improved final-answer performance on uncertain samples.</p>
-            <figure class="figure ablation-figure">
-              <!-- Put Figure 3 at: assets/selection_quality.png -->
-              <img src="assets/selection_quality_v1.png" alt="Correct-answer proportion and sub-instruction correctness on uncertain samples" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-              <div class="placeholder" style="display:none; min-height: 260px;">Place Figure 3 here:<br>assets/selection_quality_v1.png</div>
-              <figcaption class="caption">Correct-answer proportion and sub-instruction correctness on AIME 2024 and AIME 2025. The complete MILES design achieves the best performance on both metrics.</figcaption>
-            </figure>
+          <div>
+            <p class="lead" style="margin-bottom:12px">Combining both layers (Exp.&nbsp;4) gives the best accuracy on both datasets, and disabling either layer (Exp.&nbsp;2&ndash;3) lowers it.</p>
+            <p class="muted" style="font-size:15.5px">State-similarity reranking (Exp.&nbsp;5) recovers part of the learned heads' gain. LLM-prompt reranking (Exp.&nbsp;6) does not improve over using Layer&nbsp;1 alone. The learned heads therefore capture signal that neither prompting nor surface similarity of states provides.</p>
           </div>
         </div>
+        <figure class="figure narrow" style="margin-top:22px">
+          <a class="frame" href="assets/fig_selection_quality.svg" target="_blank" rel="noopener" title="Open the figure at full size">
+            <img src="assets/fig_selection_quality.svg" width="998" height="352" loading="lazy" decoding="async"
+                 alt="Bar charts for AIME 2024 and AIME 2025 showing correct-answer proportion and sub-instruction correct rate for Exp. 1 to 6. Exp. 4 is highest on both metrics: 39.64 and 57.14 on AIME 2024, 35.54 and 47.27 on AIME 2025.">
+          </a>
+          <figcaption><b>Figure 3.</b> Correct-answer proportion and sub-instruction accuracy on uncertain samples for each experiment in Table&nbsp;4. The full method (Exp.&nbsp;4) is highest on both metrics.</figcaption>
+        </figure>
       </div>
     </section>
 
-    <section id="citation">
-      <div class="container card">
-        <h2 class="section-title">Citation</h2>
-        <pre class="bibtex"><code>@misc{tong2026milesmodularinstructionmemory,
+    <!-- Analysis -->
+    <section id="analysis" data-nav="analysis">
+      <div class="wrap">
+        <p class="eyebrow">Analysis</p>
+        <h2>Scaling, robustness, and what a sub-instruction does</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Rollout budget and memory size</h3>
+            <p>More MCTS rollouts per confident question give a larger memory with better coverage of the step-goal space, and higher accuracy.</p>
+            <div class="table-wrap">
+              <table aria-label="Table 5: effect of the MCTS rollout budget">
+                <thead><tr><th scope="col" class="left">Dataset</th><th scope="col">Rollouts</th><th scope="col">Units</th><th scope="col" class="ours">Acc.</th></tr></thead>
+                <tbody>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="3" class="ds">AIME 2024</th><td>20</td><td>9</td><td class="ours">60.00</td></tr>
+                  <tr><td>30</td><td>15</td><td class="ours best">66.67</td></tr>
+                  <tr><td>40</td><td>20</td><td class="ours best">66.67</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="3" class="ds">AIME 2025</th><td>20</td><td>10</td><td class="ours">53.33</td></tr>
+                  <tr><td>30</td><td>19</td><td class="ours">56.67</td></tr>
+                  <tr><td>40</td><td>25</td><td class="ours best">60.00</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="table-note"><b>Table 5.</b> GPT-4.1-mini. Units: memory size.</p>
+          </div>
+          <div class="card">
+            <h3>Effect of sample order</h3>
+            <p>With 20 rollouts, easy-to-hard order gives the highest accuracy on both datasets, which the paper attributes to useful memory accumulating before hard questions arrive. With 40 rollouts, the three orders are within 3.33 points of each other.</p>
+            <div class="table-wrap">
+              <table aria-label="Table 6: effect of sample order">
+                <thead><tr><th scope="col" class="left">Dataset</th><th scope="col" class="left">Order</th><th scope="col" class="ours">20</th><th scope="col" class="ours">40</th></tr></thead>
+                <tbody>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="3" class="ds">AIME 2024</th><td class="left">default</td><td class="ours">60.00</td><td class="ours">66.67</td></tr>
+                  <tr><td class="left">easy&rarr;hard</td><td class="ours">66.67</td><td class="ours">66.67</td></tr>
+                  <tr><td class="left">hard&rarr;easy</td><td class="ours">63.33</td><td class="ours">66.67</td></tr>
+                  <tr class="group-start"><th scope="rowgroup" rowspan="3" class="ds">AIME 2025</th><td class="left">default</td><td class="ours">53.33</td><td class="ours">60.00</td></tr>
+                  <tr><td class="left">easy&rarr;hard</td><td class="ours">60.00</td><td class="ours">60.00</td></tr>
+                  <tr><td class="left">hard&rarr;easy</td><td class="ours">56.67</td><td class="ours">63.33</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="table-note"><b>Table 6.</b> GPT-4.1-mini, accuracy (%) with 20 or 40 rollouts per confident question.</p>
+          </div>
+          <div class="card">
+            <h3>Effect of a selected sub-instruction</h3>
+            <p>Under matched reasoning states, trajectories that apply a selected sub-instruction are more accurate than trajectories without one, in all 12 dataset&ndash;backbone cells, by 0.63 to 10.80 points.</p>
+            <div class="table-wrap">
+              <table aria-label="Table 14: accuracy improvement from applying a selected sub-instruction">
+                <thead><tr><th scope="col" class="left">Dataset</th><th scope="col">4.1-mini</th><th scope="col">4.1</th></tr></thead>
+                <tbody>
+                  <tr><td class="left">MATH-500</td><td>+6.48</td><td>+2.23</td></tr>
+                  <tr><td class="left">AIME 2024</td><td>+10.80</td><td>+3.77</td></tr>
+                  <tr><td class="left">AIME 2025</td><td>+9.12</td><td>+2.31</td></tr>
+                  <tr><td class="left">GPQA-Diamond</td><td>+4.36</td><td>+3.21</td></tr>
+                  <tr><td class="left">MMLU-Pro Phys.</td><td>+4.12</td><td>+8.73</td></tr>
+                  <tr><td class="left">MMLU-Pro Eng.</td><td>+0.63</td><td>+3.87</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="table-note"><b>Table 14</b> (appendix). Accuracy gain in percentage points, GPT-4.1-mini and GPT-4.1.</p>
+          </div>
+        </div>
+
+        <h3 class="block-title">Case study: one sub-instruction changes the solution path</h3>
+        <p class="question"><strong>MATH-500 (algebra).</strong> Let <span class="nw">\(x, y, z\) be positive real numbers such that \(xyz = 2\).</span> Find the minimum value of <span class="nw">\(x^4 + 4y^2 + 4z^4\).</span></p>
+        <div class="case">
+          <div class="case-col bad">
+            <h4>Zero-shot CoT</h4>
+            <p>The model applies AM&ndash;GM to <span class="nw">\(x^4, 2y^2, 2y^2, 2z^4, 2z^4\),</span> then works through a long equality-case computation that ends at an expression, not a number.</p>
+            <p style="margin:0">Final answer: \(2^{8/5} + 4\cdot 2^{3/5} + 4\cdot 2^{6/5}\) <span class="verdict">&#10005; incorrect</span></p>
+          </div>
+          <div class="case-col good">
+            <h4>With a selected sub-instruction</h4>
+            <div class="subinstr"><b>Sub-instruction from memory</b>Rewrite or simplify algebraic expressions or equations by substituting variables, factoring, or using properties of roots and exponents to transform them into more manageable forms.</div>
+            <p>The next step substitutes <span class="nw">\(z = \tfrac{2}{xy}\),</span> which gives <span class="nw">\(x^4 + 4y^2 + \tfrac{64}{x^4y^4}\).</span> The model then sets <span class="nw">\(a = x^4\),</span> <span class="nw">\(b = y^2\) and minimizes \(a + 4b + \tfrac{64}{ab^2}\).</span></p>
+            <p style="margin:0">Final answer: \(16\) at \(x = y = \sqrt{2},\ z = 1\) <span class="verdict">&#10003; correct</span></p>
+          </div>
+        </div>
+        <p class="table-note">From the paper's case studies (MATH-500, memory-guided tree search). Both trajectories share the first reasoning step.</p>
+      </div>
+    </section>
+
+    <section id="citation" data-nav="citation">
+      <div class="wrap">
+        <p class="eyebrow">Citation</p>
+        <h2>BibTeX</h2>
+        <div class="bib">
+          <button class="copy" type="button" data-copy="#bibtex" aria-label="Copy BibTeX to clipboard"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Copy</span></button>
+<pre id="bibtex"><code>@misc{tong2026milesmodularinstructionmemory,
   title={MILES: Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning},
   author={Ruilin Tong and Dong Gong},
   year={2026},
@@ -651,14 +923,149 @@
   primaryClass={cs.CL},
   url={https://arxiv.org/abs/2607.06974},
 }</code></pre>
+        </div>
       </div>
     </section>
   </main>
 
   <footer>
-    <div class="container">
-      <p>© 2026 Ruilin Tong and Dong Gong. Page template generated for the MILES project.</p>
+    <div class="wrap">
+      <p>&copy; 2026 Ruilin Tong and Dong Gong &middot; <a href="https://donggong1.github.io/group/" target="_blank" rel="noopener noreferrer">Artificer AI Lab</a>, <a href="https://www.unsw.edu.au/" target="_blank" rel="noopener noreferrer">UNSW Sydney</a></p>
+      <p><a href="https://donggong1.github.io/projects/" target="_blank" rel="noopener noreferrer">More projects</a></p>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+
+      // Theme toggle: light/dark override, saved per browser; default follows the system.
+      var btn = document.getElementById('theme-toggle');
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      function effective() { return root.getAttribute('data-theme') || (mq.matches ? 'dark' : 'light'); }
+      function paint() {
+        var dark = effective() === 'dark';
+        btn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+        btn.querySelector('i').className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      }
+      btn.addEventListener('click', function () {
+        var next = effective() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('miles-theme', next); } catch (e) {}
+        paint();
+      });
+      if (mq.addEventListener) mq.addEventListener('change', paint);
+      paint();
+
+      // Reading progress bar.
+      var bar = document.getElementById('progress-bar'), ticking = false;
+      function progress() {
+        var max = root.scrollHeight - root.clientHeight;
+        bar.style.width = (max > 0 ? (root.scrollTop / max) * 100 : 0) + '%';
+        ticking = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) { ticking = true; requestAnimationFrame(progress); }
+      }, { passive: true });
+      progress();
+
+      // Highlight the nav link of the section in view.
+      var links = {};
+      document.querySelectorAll('.nav-links a[data-target]').forEach(function (a) { links[a.getAttribute('data-target')] = a; });
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (!e.isIntersecting) return;
+            var key = e.target.getAttribute('data-nav');
+            Object.keys(links).forEach(function (k) { links[k].classList.toggle('active', k === key); });
+          });
+        }, { rootMargin: '-45% 0px -50% 0px' });
+        document.querySelectorAll('section[data-nav]').forEach(function (s) { io.observe(s); });
+      }
+
+      // Copy BibTeX.
+      document.querySelectorAll('[data-copy]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var el = document.querySelector(b.getAttribute('data-copy'));
+          var label = b.querySelector('span');
+          function done() {
+            label.textContent = 'Copied';
+            b.classList.add('done');
+            setTimeout(function () { label.textContent = 'Copy'; b.classList.remove('done'); }, 1600);
+          }
+          function fallback() {
+            var r = document.createRange(), s = window.getSelection();
+            r.selectNodeContents(el); s.removeAllRanges(); s.addRange(r);
+            try { document.execCommand('copy'); done(); } catch (e) {}
+            s.removeAllRanges();
+          }
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(el.innerText).then(done, fallback);
+          } else {
+            fallback();
+          }
+        });
+      });
+
+      // Walkthrough controls: every animation in the SVG shares one 32 s loop, so seeking them all to one time shows one frame.
+      (function () {
+        var obj = document.getElementById('walk-svg'), ctrl = document.getElementById('walk-controls');
+        if (!obj || !ctrl) return;
+        var LOOP = 32000;
+        var STEPS = [2500, 7000, 11500, 15500, 18500, 21500, 24500, 29500];
+        var STEP_PHASE = [0, 1, 1, 2, 2, 2, 2, 3];
+        var PHASE_STEP = [0, 1, 3, 7];
+        var PHASE_END = [4000, 14000, 26000, 32000];
+        var doc = null, playing = true, step = -1;
+        var toggle = ctrl.querySelector('[data-action="toggle"]');
+        var chips = Array.prototype.slice.call(ctrl.querySelectorAll('.walk-chip'));
+        function anims() { try { return doc ? doc.getAnimations() : []; } catch (e) { return []; } }
+        function now() { var a = anims()[0]; return a ? (Number(a.currentTime) || 0) % LOOP : 0; }
+        function phaseAt(t) { for (var i = 0; i < PHASE_END.length; i++) if (t < PHASE_END[i]) return i; return 3; }
+        function stepAt(t) { var k = 0; for (var i = 0; i < STEPS.length; i++) if (t >= STEPS[i] - 1500) k = i; return k; }
+        function mark(p) { chips.forEach(function (c, i) { c.setAttribute('aria-pressed', i === p ? 'true' : 'false'); }); }
+        function setPlaying(p) {
+          playing = p;
+          toggle.classList.toggle('is-paused', !p);
+          toggle.setAttribute('aria-label', p ? 'Pause' : 'Play');
+          anims().forEach(function (a) { try { if (p) a.play(); else a.pause(); } catch (e) {} });
+        }
+        function seek(i) {
+          step = (i % STEPS.length + STEPS.length) % STEPS.length;
+          anims().forEach(function (a) { try { a.currentTime = STEPS[step]; a.pause(); } catch (e) {} });
+          setPlaying(false);
+          mark(STEP_PHASE[step]);
+        }
+        ctrl.addEventListener('click', function (e) {
+          var b = e.target.closest('button');
+          if (!b) return;
+          var act = b.getAttribute('data-action'), from = step < 0 ? stepAt(now()) : step;
+          if (act === 'toggle') { if (playing) { setPlaying(false); step = stepAt(now()); } else { step = -1; setPlaying(true); } }
+          else if (act === 'prev') seek(from - 1);
+          else if (act === 'next') seek(from + 1);
+          else if (b.hasAttribute('data-phase')) seek(PHASE_STEP[Number(b.getAttribute('data-phase'))]);
+        });
+        setInterval(function () { if (playing && doc) mark(phaseAt(now())); }, 300);
+        function init() {
+          try { doc = obj.contentDocument; } catch (e) { doc = null; }
+          // Without script access to the SVG (e.g. a file:// preview) the animation still plays; the controls stay hidden.
+          if (!doc || !doc.getAnimations || !anims().length) return;
+          ctrl.hidden = false;
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) seek(STEPS.length - 1);
+        }
+        var d = null;
+        try { d = obj.contentDocument; } catch (e) {}
+        if (d && d.readyState === 'complete' && d.documentElement && d.documentElement.nodeName.toLowerCase() === 'svg') init();
+        else obj.addEventListener('load', init);
+      })();
+
+      // Respect reduced-motion: do not autoplay the animation.
+      var v = document.querySelector('video[autoplay]');
+      if (v && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        v.removeAttribute('autoplay');
+        v.pause();
+      }
+    })();
+  </script>
 </body>
 </html>

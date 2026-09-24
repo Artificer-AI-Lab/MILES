@@ -1,0 +1,560 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" width="1000" height="520" role="img" aria-labelledby="mw-title mw-desc">
+<title id="mw-title">Animated walkthrough of MILES at test time</title>
+<desc id="mw-desc">Questions arrive without labels and a frozen LLM answers each one K = 10 times. When the answers agree (question q_t), the question is confident and goes to WRITE: the majority answer is the pseudo-label, MCTS rollouts that applied units u2 and u4 are scored against it, a step with no matching unit becomes a seed, seeds are summarized into a new memory unit u5, and the per-unit selection heads are trained with BCE. When the answers disagree (question q_t+1), the question is uncertain and goes to READ: the LLM proposes a step-goal, Layer 1 retrieves the units with the most similar sub-goals (u4, u2, u5), the learned Layer-2 heads rerank them so that u5 comes first, u5 guides the next reasoning step, and the response pool is majority-voted. Memory keeps growing along the stream while the LLM stays frozen. Answer counts and scores are illustrative.</desc>
+<defs><marker id="mw-ah-9aa0a6" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 Z" fill="#9aa0a6"/></marker><marker id="mw-ah-5f6368" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 Z" fill="#5f6368"/></marker><marker id="mw-ah-c3c8d0" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 Z" fill="#c3c8d0"/></marker><marker id="mw-ah-3b7d23" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 Z" fill="#3b7d23"/></marker><marker id="mw-ah-e0600f" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 Z" fill="#e0600f"/></marker><marker id="mw-ah-bf5210" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 Z" fill="#bf5210"/></marker></defs>
+<style>
+@font-face{font-family:MWRoboto;src:url(data:font/woff2;base64,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) format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:MWRoboto;src:url(data:font/woff2;base64,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) format("woff2");font-weight:500;font-style:normal}
+@font-face{font-family:MWRoboto;src:url(data:font/woff2;base64,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) format("woff2");font-weight:700;font-style:normal}
+@font-face{font-family:MWStix;src:url(data:font/woff2;base64,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) format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:MWStix;src:url(data:font/woff2;base64,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) format("woff2");font-weight:400;font-style:italic}
+.mw-r,.mw-m,.mw-b,.mw-ri{font-family:MWRoboto,Roboto,"Helvetica Neue",Arial,sans-serif}.mw-r{font-weight:400}.mw-m{font-weight:500}.mw-b{font-weight:700}.mw-ri{font-weight:400;font-style:italic}.mw-x,.mw-xi{font-family:MWStix,"STIX Two Math",STIXGeneral,"Cambria Math","Times New Roman",serif;font-weight:400}.mw-x{font-style:normal}.mw-xi{font-style:italic}
+.mw-halo{paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+.mw-grow{transform-box:fill-box;transform-origin:50% 100%}
+.mw-draw path{stroke-dasharray:100;stroke-dashoffset:inherit}
+.mw-draw{stroke-dashoffset:0}
+.mw-a1{opacity:1;animation:mw-k1 32s linear infinite}
+.mw-a2{opacity:1;animation:mw-k2 32s linear infinite}
+.mw-a3{opacity:1;animation:mw-k3 32s linear infinite}
+.mw-a4{opacity:1;animation:mw-k4 32s linear infinite}
+.mw-a5{transform:scaleY(1);opacity:1;animation:mw-k5 32s linear infinite,mw-k6 32s linear infinite}
+.mw-a6{opacity:1;animation:mw-k7 32s linear infinite}
+.mw-a7{transform:scaleY(1);animation:mw-k8 32s linear infinite}
+.mw-a8{opacity:1;animation:mw-k9 32s linear infinite}
+.mw-a9{opacity:1;animation:mw-k10 32s linear infinite}
+.mw-a10{opacity:0;animation:mw-k11 32s linear infinite}
+.mw-a11{opacity:0;animation:mw-k12 32s linear infinite}
+.mw-a12{opacity:0;animation:mw-k13 32s linear infinite}
+.mw-a13{opacity:1;animation:mw-k14 32s linear infinite}
+.mw-a14{opacity:0;animation:mw-k15 32s linear infinite}
+.mw-a15{opacity:0;animation:mw-k15 32s linear infinite}
+.mw-a16{opacity:0;animation:mw-k16 32s linear infinite}
+.mw-a17{opacity:1;transform:translateX(0px);animation:mw-k17 32s linear infinite,mw-k18 32s linear infinite}
+.mw-a18{opacity:0;animation:mw-k19 32s linear infinite}
+.mw-a19{opacity:1;transform:translateX(0px);animation:mw-k20 32s linear infinite,mw-k21 32s linear infinite}
+.mw-a20{opacity:1;transform:translateX(0px);animation:mw-k22 32s linear infinite,mw-k23 32s linear infinite}
+.mw-a21{opacity:0;animation:mw-k24 32s linear infinite}
+.mw-a22{opacity:0;animation:mw-k25 32s linear infinite}
+.mw-a23{opacity:1;animation:mw-k26 32s linear infinite}
+.mw-a24{opacity:1;animation:mw-k27 32s linear infinite}
+.mw-a25{opacity:1;animation:mw-k28 32s linear infinite}
+.mw-a26{opacity:1;animation:mw-k29 32s linear infinite}
+.mw-a27{opacity:1;animation:mw-k30 32s linear infinite}
+.mw-a28{opacity:1;animation:mw-k31 32s linear infinite}
+.mw-a29{opacity:1;animation:mw-k32 32s linear infinite}
+.mw-a30{opacity:1;animation:mw-k33 32s linear infinite}
+.mw-a31{opacity:1;animation:mw-k34 32s linear infinite}
+.mw-a32{opacity:1;animation:mw-k35 32s linear infinite}
+.mw-a33{opacity:1;animation:mw-k36 32s linear infinite}
+.mw-a34{opacity:1;animation:mw-k37 32s linear infinite}
+.mw-a35{opacity:1;animation:mw-k38 32s linear infinite}
+.mw-a36{opacity:1;animation:mw-k39 32s linear infinite}
+.mw-a37{opacity:1;animation:mw-k40 32s linear infinite}
+.mw-a38{opacity:1;animation:mw-k41 32s linear infinite}
+.mw-a39{stroke-dashoffset:0;opacity:1;animation:mw-k42 32s linear infinite,mw-k43 32s linear infinite}
+.mw-a40{opacity:1;animation:mw-k10 32s linear infinite}
+.mw-a41{opacity:1;animation:mw-k44 32s linear infinite}
+.mw-a42{opacity:1;animation:mw-k45 32s linear infinite}
+.mw-a43{stroke-dashoffset:0;animation:mw-k46 32s linear infinite}
+.mw-a44{opacity:1;animation:mw-k47 32s linear infinite}
+.mw-a45{opacity:1;animation:mw-k47 32s linear infinite}
+.mw-a46{opacity:1;animation:mw-k48 32s linear infinite}
+.mw-a47{opacity:1;animation:mw-k49 32s linear infinite}
+.mw-a48{opacity:1;animation:mw-k50 32s linear infinite}
+.mw-a49{opacity:1;animation:mw-k51 32s linear infinite}
+.mw-a50{opacity:1;animation:mw-k52 32s linear infinite}
+.mw-a51{opacity:1;animation:mw-k53 32s linear infinite}
+.mw-a52{opacity:1;animation:mw-k54 32s linear infinite}
+.mw-a53{opacity:1;animation:mw-k55 32s linear infinite}
+.mw-a54{opacity:1;animation:mw-k56 32s linear infinite}
+.mw-a55{opacity:1;animation:mw-k57 32s linear infinite}
+.mw-a56{opacity:1;animation:mw-k58 32s linear infinite}
+.mw-a57{opacity:1;animation:mw-k59 32s linear infinite}
+.mw-a58{opacity:1;animation:mw-k60 32s linear infinite}
+.mw-a59{opacity:1;animation:mw-k61 32s linear infinite}
+.mw-a60{opacity:1;animation:mw-k62 32s linear infinite}
+.mw-a61{opacity:1;animation:mw-k63 32s linear infinite}
+.mw-a62{opacity:0;animation:mw-k64 32s linear infinite}
+.mw-a63{opacity:0;animation:mw-k65 32s linear infinite}
+.mw-a64{opacity:0;animation:mw-k66 32s linear infinite}
+.mw-a65{opacity:0;animation:mw-k67 32s linear infinite}
+.mw-a66{opacity:0;animation:mw-k68 32s linear infinite}
+.mw-a67{opacity:0;animation:mw-k69 32s linear infinite}
+.mw-a68{opacity:0;animation:mw-k70 32s linear infinite}
+.mw-a69{opacity:1;animation:mw-k71 32s linear infinite}
+@keyframes mw-k1{0%{opacity:0}0.9375%{opacity:0}2.188%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k2{0%{opacity:0}43.75%{opacity:0}45%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k3{0%{opacity:0}81.88%{opacity:0}83.12%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k4{0%{opacity:0}4.062%{opacity:0}5.313%{opacity:1}45%{opacity:1}46.25%{opacity:0.35}80.62%{opacity:0.35}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k5{0%{transform:scaleY(0)}3.125%{transform:scaleY(0)}5%{transform:scaleY(1)}98.12%{transform:scaleY(1)}100%{transform:scaleY(0)}}
+@keyframes mw-k6{0%{opacity:1}45%{opacity:1}46.25%{opacity:0.35}80.62%{opacity:0.35}81.88%{opacity:1}100%{opacity:1}}
+@keyframes mw-k7{0%{opacity:0}46.25%{opacity:0}47.5%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k8{0%{transform:scaleY(0)}45%{transform:scaleY(0)}46.88%{transform:scaleY(1)}98.12%{transform:scaleY(1)}100%{transform:scaleY(0)}}
+@keyframes mw-k9{0%{opacity:0}5.938%{opacity:0}7.187%{opacity:1}43.12%{opacity:1}44.38%{opacity:0}80.62%{opacity:0}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k10{0%{opacity:0}46.56%{opacity:0}47.81%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k11{0%{opacity:1}30.63%{opacity:1}31.88%{opacity:0}98.12%{opacity:0}100%{opacity:1}}
+@keyframes mw-k12{0%{opacity:0}30.63%{opacity:0}31.88%{opacity:1}83.44%{opacity:1}84.69%{opacity:0}100%{opacity:0}}
+@keyframes mw-k13{0%{opacity:0}83.44%{opacity:0}84.69%{opacity:1}85.94%{opacity:1}87.19%{opacity:0}100%{opacity:0}}
+@keyframes mw-k14{0%{opacity:0}85.94%{opacity:0}87.19%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k15{0%{opacity:1}61.25%{opacity:1}62.5%{opacity:0}98.12%{opacity:0}100%{opacity:1}}
+@keyframes mw-k16{0%{opacity:0}13.75%{opacity:0}14.69%{opacity:1}24.38%{opacity:1}25.31%{opacity:0}100%{opacity:0}}
+@keyframes mw-k17{0%{opacity:0}30%{opacity:0}31.87%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k18{0%{transform:translateX(-36px)}30%{transform:translateX(-36px)}31.87%{transform:translateX(0px)}98.12%{transform:translateX(0px)}100%{transform:translateX(-36px)}}
+@keyframes mw-k19{0%{opacity:0}30%{opacity:0}31.87%{opacity:1}61.25%{opacity:1}62.5%{opacity:0}100%{opacity:0}}
+@keyframes mw-k20{0%{opacity:0}83.12%{opacity:0}85%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k21{0%{transform:translateX(-36px)}83.12%{transform:translateX(-36px)}85%{transform:translateX(0px)}98.12%{transform:translateX(0px)}100%{transform:translateX(-36px)}}
+@keyframes mw-k22{0%{opacity:0}85.62%{opacity:0}87.5%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k23{0%{transform:translateX(-36px)}85.62%{transform:translateX(-36px)}87.5%{transform:translateX(0px)}98.12%{transform:translateX(0px)}100%{transform:translateX(-36px)}}
+@keyframes mw-k24{0%{opacity:0}31.25%{opacity:0}32.5%{opacity:1}42.5%{opacity:1}43.75%{opacity:0}100%{opacity:0}}
+@keyframes mw-k25{0%{opacity:0}33.12%{opacity:0}34.38%{opacity:1}42.5%{opacity:1}43.75%{opacity:0}100%{opacity:0}}
+@keyframes mw-k26{0%{opacity:0}87.5%{opacity:0}88.75%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k27{0%{opacity:0}6.25%{opacity:0}7.5%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k28{0%{opacity:0}12.5%{opacity:0}13.75%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k29{0%{opacity:0}13.75%{opacity:0}15%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k30{0%{opacity:0}15%{opacity:0}16.25%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k31{0%{opacity:0}16.25%{opacity:0}17.5%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k32{0%{opacity:0}17.81%{opacity:0}19.06%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k33{0%{opacity:0}17.81%{opacity:0}18.75%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k34{0%{opacity:0}18.44%{opacity:0}19.38%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k35{0%{opacity:0}19.06%{opacity:0}20%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k36{0%{opacity:0}25%{opacity:0}26.25%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k37{0%{opacity:0}25.94%{opacity:0}27.19%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k38{0%{opacity:0}27.81%{opacity:0}29.06%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k39{0%{opacity:0}29.06%{opacity:0}30.31%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k40{0%{opacity:0}30%{opacity:0}31.25%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k41{0%{opacity:0}32.5%{opacity:0}33.75%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k42{0%{stroke-dashoffset:100}32.81%{stroke-dashoffset:100}34.69%{stroke-dashoffset:0}98.12%{stroke-dashoffset:0}100%{stroke-dashoffset:100}}
+@keyframes mw-k43{0%{opacity:1}43.12%{opacity:1}44.38%{opacity:0.3}80.62%{opacity:0.3}81.88%{opacity:1}100%{opacity:1}}
+@keyframes mw-k44{0%{opacity:0}49.69%{opacity:0}50.94%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k45{0%{opacity:0}51.25%{opacity:0}52.5%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k46{0%{stroke-dashoffset:100}53.12%{stroke-dashoffset:100}55%{stroke-dashoffset:0}98.12%{stroke-dashoffset:0}100%{stroke-dashoffset:100}}
+@keyframes mw-k47{0%{opacity:0}53.75%{opacity:0}55%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k48{0%{opacity:0}54.06%{opacity:0}55%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k49{0%{opacity:0}54.38%{opacity:0}55.31%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k50{0%{opacity:0}54.69%{opacity:0}55.62%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k51{0%{opacity:0}61.25%{opacity:0}62.5%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k52{0%{opacity:0}61.88%{opacity:0}62.81%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k53{0%{opacity:0}62.34%{opacity:0}63.28%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k54{0%{opacity:0}62.81%{opacity:0}63.75%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k55{0%{opacity:0}61.88%{opacity:0}63.12%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k56{0%{opacity:0}63.12%{opacity:0}64.38%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k57{0%{opacity:0}70.62%{opacity:0}71.88%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k58{0%{opacity:0}71.88%{opacity:0}72.66%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k59{0%{opacity:0}72.34%{opacity:0}73.12%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k60{0%{opacity:0}72.81%{opacity:0}73.59%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k61{0%{opacity:0}73.28%{opacity:0}74.06%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k62{0%{opacity:0}73.75%{opacity:0}74.53%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k63{0%{opacity:0}74.38%{opacity:0}75.62%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@keyframes mw-k64{0%{opacity:0}1.875%{opacity:0}2.812%{opacity:1}12.5%{opacity:1}13.44%{opacity:0}100%{opacity:0}}
+@keyframes mw-k65{0%{opacity:0}13.75%{opacity:0}14.69%{opacity:1}25%{opacity:1}25.94%{opacity:0}100%{opacity:0}}
+@keyframes mw-k66{0%{opacity:0}26.25%{opacity:0}27.19%{opacity:1}43.12%{opacity:1}44.06%{opacity:0}100%{opacity:0}}
+@keyframes mw-k67{0%{opacity:0}44.38%{opacity:0}45.31%{opacity:1}51.25%{opacity:1}52.19%{opacity:0}100%{opacity:0}}
+@keyframes mw-k68{0%{opacity:0}51.88%{opacity:0}52.81%{opacity:1}61.25%{opacity:1}62.19%{opacity:0}100%{opacity:0}}
+@keyframes mw-k69{0%{opacity:0}61.88%{opacity:0}62.81%{opacity:1}70.62%{opacity:1}71.56%{opacity:0}100%{opacity:0}}
+@keyframes mw-k70{0%{opacity:0}71.25%{opacity:0}72.19%{opacity:1}80.62%{opacity:1}81.56%{opacity:0}100%{opacity:0}}
+@keyframes mw-k71{0%{opacity:0}81.25%{opacity:0}82.19%{opacity:1}98.12%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.mw-anim{animation:none!important}}
+</style>
+<rect width="1000" height="520" fill="#fff"/>
+<rect x="10.0" y="10.0" width="980.0" height="106.0" rx="10" fill="#f6fafc" stroke="#b7d3e0" stroke-width="1.2"/>
+<text x="24.0" y="33.0" font-size="14" fill="#0b769f" xml:space="preserve"><tspan class="mw-b">Test-time stream</tspan></text>
+<text x="143.8" y="33.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">no ground-truth labels</tspan></text>
+<circle cx="42.0" cy="80.0" r="16" fill="#9aa0a6"/>
+<text x="42.0" y="84.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">1</tspan></text>
+<circle cx="110.0" cy="80.0" r="16" fill="#9aa0a6"/>
+<text x="110.0" y="84.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">t</tspan></text>
+<circle cx="158.0" cy="80.0" r="16" fill="#9aa0a6"/>
+<text x="158.0" y="84.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">t</tspan><tspan class="mw-x" font-size="9.36">+1</tspan></text>
+<circle cx="206.0" cy="80.0" r="16" fill="#9aa0a6"/>
+<text x="206.0" y="84.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">t</tspan><tspan class="mw-x" font-size="9.36">+2</tspan></text>
+<text x="76.0" y="84.0" font-size="15" text-anchor="middle" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">…</tspan></text>
+<text x="240.0" y="84.0" font-size="15" text-anchor="middle" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">…</tspan></text>
+<path d="M59,80 L66,80" fill="none" stroke="#9aa0a6" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-9aa0a6)"/>
+<path d="M85,80 L92,80" fill="none" stroke="#9aa0a6" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-9aa0a6)"/>
+<path d="M127,80 L140,80" fill="none" stroke="#9aa0a6" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-9aa0a6)"/>
+<path d="M175,80 L188,80" fill="none" stroke="#9aa0a6" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-9aa0a6)"/>
+<path d="M223,80 L230,80" fill="none" stroke="#9aa0a6" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-9aa0a6)"/>
+<g class="mw-anim mw-a1">
+<circle cx="110.0" cy="80.0" r="21" fill="none" stroke="#3b7d23" stroke-width="2.6"/>
+</g>
+<g class="mw-anim mw-a2">
+<circle cx="158.0" cy="80.0" r="21" fill="none" stroke="#e0600f" stroke-width="2.6"/>
+</g>
+<g class="mw-anim mw-a3">
+<circle cx="206.0" cy="80.0" r="21" fill="none" stroke="#1e8183" stroke-width="2.2" stroke-dasharray="4 3"/>
+</g>
+<path d="M252,80 L276,80" fill="none" stroke="#5f6368" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-5f6368)"/>
+<rect x="278.0" y="54.0" width="128.0" height="52.0" rx="8" fill="#fff" stroke="#c3c8d0" stroke-width="1.2"/>
+<path d="M292.5,69 V65.5 A4.5,4.5 0 0 1 301.5,65.5 V69" fill="none" stroke="#5f6368" stroke-width="1.7"/>
+<rect x="290.0" y="69.0" width="14.0" height="10.5" rx="2" fill="#5f6368"/>
+<text x="311.0" y="76.0" font-size="13" xml:space="preserve"><tspan class="mw-m">frozen LLM</tspan></text>
+<text x="290.0" y="97.0" font-size="13" xml:space="preserve"><tspan class="mw-r">samples </tspan><tspan class="mw-xi">K</tspan><tspan class="mw-x" dx="3.25">=</tspan><tspan class="mw-x" dx="3.25">10</tspan></text>
+<path d="M406,80 L424,80" fill="none" stroke="#5f6368" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-5f6368)"/>
+<line x1="432.0" y1="106.0" x2="526.0" y2="106.0" stroke="#5f6368" stroke-width="1"/>
+<line x1="550.0" y1="106.0" x2="650.0" y2="106.0" stroke="#5f6368" stroke-width="1"/>
+<g class="mw-anim mw-a4">
+<text x="479.0" y="44.0" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">t</tspan><tspan class="mw-r" dy="-3.25">: 8 of 10 agree</tspan></text>
+</g>
+<g class="mw-anim mw-a5 mw-grow">
+<rect x="454.0" y="62.0" width="22.0" height="44.0" rx="2" fill="#2e7d32"/>
+<rect x="484.0" y="95.0" width="22.0" height="11.0" rx="2" fill="#b3b9c1"/>
+</g>
+<g class="mw-anim mw-a6">
+<text x="600.0" y="44.0" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">t</tspan><tspan class="mw-x" font-size="9.36">+1</tspan><tspan class="mw-r" dy="-3.25">: 3 of 10 agree</tspan></text>
+</g>
+<g class="mw-anim mw-a7 mw-grow">
+<rect x="555.0" y="89.5" width="14.0" height="16.5" rx="2" fill="#e0600f"/>
+<rect x="574.0" y="95.0" width="14.0" height="11.0" rx="2" fill="#f2b489"/>
+<rect x="593.0" y="95.0" width="14.0" height="11.0" rx="2" fill="#f2b489"/>
+<rect x="612.0" y="95.0" width="14.0" height="11.0" rx="2" fill="#f2b489"/>
+<rect x="631.0" y="100.5" width="14.0" height="5.5" rx="2" fill="#f2b489"/>
+</g>
+<path d="M654,80 L668,80" fill="none" stroke="#5f6368" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-5f6368)"/>
+<path d="M704,58 L738,80 L704,102 L670,80 Z" fill="#fff" stroke="#5f6368" stroke-width="1.3"/>
+<text x="704.0" y="84.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-x">≥</tspan><tspan class="mw-xi" dx="3.25">τ</tspan><tspan class="mw-r"> ?</tspan></text>
+<text x="756.0" y="50.0" font-size="13" fill="#3b7d23" xml:space="preserve"><tspan class="mw-x">≥</tspan><tspan class="mw-xi" dx="3.25">τ</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">→</tspan><tspan class="mw-r"> </tspan><tspan class="mw-m">confident</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">→</tspan><tspan class="mw-r"> WRITE</tspan></text>
+<text x="756.0" y="70.0" font-size="13" fill="#bf5210" xml:space="preserve"><tspan class="mw-x">&lt;</tspan><tspan class="mw-r"> </tspan><tspan class="mw-xi">τ</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">→</tspan><tspan class="mw-r"> </tspan><tspan class="mw-m">uncertain</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">→</tspan><tspan class="mw-r"> READ</tspan></text>
+<text x="756.0" y="90.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-xi">τ</tspan><tspan class="mw-r">: just below ZS-CoT accuracy</tspan></text>
+<text x="756.0" y="108.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">answer counts are illustrative</tspan></text>
+<path d="M704,102 V128 H171 V140" fill="none" stroke="#c3c8d0" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-c3c8d0)"/>
+<path d="M704,128 H829 V140" fill="none" stroke="#c3c8d0" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-c3c8d0)"/>
+<g class="mw-anim mw-a8">
+<path d="M704,102 V128 H171 V140" fill="none" stroke="#3b7d23" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-3b7d23)"/>
+</g>
+<g class="mw-anim mw-a9">
+<path d="M704,102 V128 H829 V140" fill="none" stroke="#e0600f" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-e0600f)"/>
+</g>
+<rect x="267.8" y="118.5" width="64.5" height="19.0" rx="4" fill="#fff"/>
+<text x="300.0" y="132.5" font-size="13" text-anchor="middle" fill="#3b7d23" xml:space="preserve"><tspan class="mw-r">confident</tspan></text>
+<rect x="740.1" y="118.5" width="63.9" height="19.0" rx="4" fill="#fff"/>
+<text x="772.0" y="132.5" font-size="13" text-anchor="middle" fill="#bf5210" xml:space="preserve"><tspan class="mw-r">uncertain</tspan></text>
+<rect x="10.0" y="142.0" width="322.0" height="326.0" rx="10" fill="#f7fbf5" stroke="#3b7d23" stroke-width="1.4"/>
+<path d="M10,168 V152 Q10,142 20,142 H322 Q332,142 332,152 V168 Z" fill="#3b7d23"/>
+<text x="22.0" y="160.5" font-size="14" fill="#fff" xml:space="preserve"><tspan class="mw-m">WRITE</tspan><tspan class="mw-r"> · confident questions</tspan></text>
+<rect x="342.0" y="142.0" width="316.0" height="326.0" rx="10" fill="#f3f9f9" stroke="#1e8183" stroke-width="1.4"/>
+<path d="M342,168 V152 Q342,142 352,142 H648 Q658,142 658,152 V168 Z" fill="#1e8183"/>
+<text x="354.0" y="160.5" font-size="14" fill="#fff" xml:space="preserve"><tspan class="mw-m">MEMORY</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">ℳ</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-x" dx="3.50">{(</tspan><tspan class="mw-xi">g</tspan><tspan class="mw-xi" font-size="10.08" dy="3.50">i</tspan><tspan class="mw-x" dy="-3.50">,</tspan><tspan class="mw-xi" dx="3.50">u</tspan><tspan class="mw-xi" font-size="10.08" dy="3.50">i</tspan><tspan class="mw-x" dy="-3.50">)}</tspan></text>
+<rect x="668.0" y="142.0" width="322.0" height="326.0" rx="10" fill="#fdf6f1" stroke="#e0600f" stroke-width="1.4"/>
+<path d="M668,168 V152 Q668,142 678,142 H980 Q990,142 990,152 V168 Z" fill="#bf5210"/>
+<text x="680.0" y="160.5" font-size="14" fill="#fff" xml:space="preserve"><tspan class="mw-m">READ</tspan><tspan class="mw-r"> · uncertain questions</tspan></text>
+<g class="mw-anim mw-a10">
+<text x="646.0" y="160.5" font-size="14" text-anchor="end" fill="#fff" xml:space="preserve"><tspan class="mw-xi">N</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-x" dx="3.50">4</tspan></text>
+</g>
+<g class="mw-anim mw-a11">
+<text x="646.0" y="160.5" font-size="14" text-anchor="end" fill="#fff" xml:space="preserve"><tspan class="mw-xi">N</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-x" dx="3.50">5</tspan></text>
+</g>
+<g class="mw-anim mw-a12">
+<text x="646.0" y="160.5" font-size="14" text-anchor="end" fill="#fff" xml:space="preserve"><tspan class="mw-xi">N</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-x" dx="3.50">6</tspan></text>
+</g>
+<g class="mw-anim mw-a13">
+<text x="646.0" y="160.5" font-size="14" text-anchor="end" fill="#fff" xml:space="preserve"><tspan class="mw-xi">N</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-x" dx="3.50">7</tspan></text>
+</g>
+<text x="356.0" y="188.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">key </tspan><tspan class="mw-xi">g</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">i</tspan></text>
+<text x="404.0" y="188.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">sub-instruction </tspan><tspan class="mw-xi">u</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">i</tspan></text>
+<text x="619.0" y="188.0" font-size="13" text-anchor="middle" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">head </tspan><tspan class="mw-xi">π</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">i</tspan></text>
+<rect x="356.0" y="202.0" width="36.0" height="16.0" rx="2" fill="#e2f0fb" stroke="#4f6da3" stroke-width="1"/>
+<line x1="365.0" y1="202.0" x2="365.0" y2="218.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="374.0" y1="202.0" x2="374.0" y2="218.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="383.0" y1="202.0" x2="383.0" y2="218.0" stroke="#4f6da3" stroke-width="0.8"/>
+<rect x="402.0" y="196.0" width="184.0" height="28.0" rx="5" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="412.0" y="215.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">1</tspan><tspan class="mw-r" dy="-3.25"> · Bound</tspan></text>
+<rect x="594.0" y="196.0" width="50.0" height="28.0" rx="5" fill="#f9e3e5" stroke="#d98a9f" stroke-width="1"/>
+<text x="619.0" y="215.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">1</tspan></text>
+<rect x="356.0" y="238.0" width="36.0" height="16.0" rx="2" fill="#e2f0fb" stroke="#4f6da3" stroke-width="1"/>
+<line x1="365.0" y1="238.0" x2="365.0" y2="254.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="374.0" y1="238.0" x2="374.0" y2="254.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="383.0" y1="238.0" x2="383.0" y2="254.0" stroke="#4f6da3" stroke-width="0.8"/>
+<rect x="402.0" y="232.0" width="184.0" height="28.0" rx="5" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="412.0" y="251.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan><tspan class="mw-r" dy="-3.25"> · Solve</tspan></text>
+<rect x="594.0" y="232.0" width="50.0" height="28.0" rx="5" fill="#f9e3e5" stroke="#d98a9f" stroke-width="1"/>
+<rect x="356.0" y="274.0" width="36.0" height="16.0" rx="2" fill="#e2f0fb" stroke="#4f6da3" stroke-width="1"/>
+<line x1="365.0" y1="274.0" x2="365.0" y2="290.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="374.0" y1="274.0" x2="374.0" y2="290.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="383.0" y1="274.0" x2="383.0" y2="290.0" stroke="#4f6da3" stroke-width="0.8"/>
+<rect x="402.0" y="268.0" width="184.0" height="28.0" rx="5" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="412.0" y="287.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">3</tspan><tspan class="mw-r" dy="-3.25"> · Factor</tspan></text>
+<rect x="594.0" y="268.0" width="50.0" height="28.0" rx="5" fill="#f9e3e5" stroke="#d98a9f" stroke-width="1"/>
+<text x="619.0" y="287.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">3</tspan></text>
+<rect x="356.0" y="310.0" width="36.0" height="16.0" rx="2" fill="#e2f0fb" stroke="#4f6da3" stroke-width="1"/>
+<line x1="365.0" y1="310.0" x2="365.0" y2="326.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="374.0" y1="310.0" x2="374.0" y2="326.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="383.0" y1="310.0" x2="383.0" y2="326.0" stroke="#4f6da3" stroke-width="0.8"/>
+<rect x="402.0" y="304.0" width="184.0" height="28.0" rx="5" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="412.0" y="323.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan><tspan class="mw-r" dy="-3.25"> · Simplify</tspan></text>
+<rect x="594.0" y="304.0" width="50.0" height="28.0" rx="5" fill="#f9e3e5" stroke="#d98a9f" stroke-width="1"/>
+<g class="mw-anim mw-a14">
+<text x="619.0" y="251.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan></text>
+</g>
+<g class="mw-anim mw-a15">
+<text x="619.0" y="323.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan></text>
+</g>
+<g class="mw-anim mw-a16">
+<rect x="350.0" y="229.0" width="300.0" height="34.0" rx="7" fill="none" stroke="#3b7d23" stroke-width="1.6"/>
+<rect x="350.0" y="301.0" width="300.0" height="34.0" rx="7" fill="none" stroke="#3b7d23" stroke-width="1.6"/>
+</g>
+<g class="mw-anim mw-a17">
+<rect x="356.0" y="346.0" width="36.0" height="16.0" rx="2" fill="#e2f0fb" stroke="#4f6da3" stroke-width="1"/>
+<line x1="365.0" y1="346.0" x2="365.0" y2="362.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="374.0" y1="346.0" x2="374.0" y2="362.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="383.0" y1="346.0" x2="383.0" y2="362.0" stroke="#4f6da3" stroke-width="0.8"/>
+<rect x="402.0" y="340.0" width="184.0" height="28.0" rx="5" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="412.0" y="359.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan><tspan class="mw-r" dy="-3.25"> · Substitute</tspan></text>
+<rect x="594.0" y="340.0" width="50.0" height="28.0" rx="5" fill="#f9e3e5" stroke="#d98a9f" stroke-width="1"/>
+</g>
+<g class="mw-anim mw-a18">
+<text x="619.0" y="359.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan></text>
+</g>
+<g class="mw-anim mw-a19">
+<rect x="356.0" y="382.0" width="36.0" height="16.0" rx="2" fill="#e2f0fb" stroke="#4f6da3" stroke-width="1"/>
+<line x1="365.0" y1="382.0" x2="365.0" y2="398.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="374.0" y1="382.0" x2="374.0" y2="398.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="383.0" y1="382.0" x2="383.0" y2="398.0" stroke="#4f6da3" stroke-width="0.8"/>
+<rect x="402.0" y="376.0" width="184.0" height="28.0" rx="5" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="412.0" y="395.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">6</tspan><tspan class="mw-r" dy="-3.25"> · Isolate</tspan></text>
+<rect x="594.0" y="376.0" width="50.0" height="28.0" rx="5" fill="#f9e3e5" stroke="#d98a9f" stroke-width="1"/>
+<text x="619.0" y="395.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">6</tspan></text>
+</g>
+<g class="mw-anim mw-a20">
+<rect x="356.0" y="418.0" width="36.0" height="16.0" rx="2" fill="#e2f0fb" stroke="#4f6da3" stroke-width="1"/>
+<line x1="365.0" y1="418.0" x2="365.0" y2="434.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="374.0" y1="418.0" x2="374.0" y2="434.0" stroke="#4f6da3" stroke-width="0.8"/>
+<line x1="383.0" y1="418.0" x2="383.0" y2="434.0" stroke="#4f6da3" stroke-width="0.8"/>
+<rect x="402.0" y="412.0" width="184.0" height="28.0" rx="5" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="412.0" y="431.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">7</tspan><tspan class="mw-r" dy="-3.25"> · Combine</tspan></text>
+<rect x="594.0" y="412.0" width="50.0" height="28.0" rx="5" fill="#f9e3e5" stroke="#d98a9f" stroke-width="1"/>
+<text x="619.0" y="431.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">7</tspan></text>
+</g>
+<g class="mw-anim mw-a21">
+<rect x="350.0" y="337.0" width="300.0" height="34.0" rx="7" fill="none" stroke="#3b7d23" stroke-width="2.0" stroke-dasharray="5 3"/>
+</g>
+<g class="mw-anim mw-a22">
+<rect x="594.0" y="232.0" width="50.0" height="28.0" rx="5" fill="#f1a9bb" stroke="#d98a9f" stroke-width="1.4"/>
+<text x="619.0" y="251.0" font-size="13" text-anchor="middle" fill="#7d2a44" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan></text>
+<rect x="594.0" y="304.0" width="50.0" height="28.0" rx="5" fill="#f1a9bb" stroke="#d98a9f" stroke-width="1.4"/>
+<text x="619.0" y="323.0" font-size="13" text-anchor="middle" fill="#7d2a44" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan></text>
+<rect x="594.0" y="340.0" width="50.0" height="28.0" rx="5" fill="#f1a9bb" stroke="#d98a9f" stroke-width="1.4"/>
+<text x="619.0" y="359.0" font-size="13" text-anchor="middle" fill="#7d2a44" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan></text>
+</g>
+<g class="mw-anim mw-a23">
+<text x="500.0" y="460.0" font-size="13" text-anchor="middle" fill="#1e8183" xml:space="preserve"><tspan class="mw-xi">N</tspan><tspan class="mw-r"> grows along the stream</tspan></text>
+</g>
+<g class="mw-anim mw-a24">
+<text x="22.0" y="190.0" font-size="13" xml:space="preserve"><tspan class="mw-r">pseudo-label </tspan><tspan class="mw-xi">ŷ</tspan><tspan class="mw-r"> = A (majority answer)</tspan></text>
+</g>
+<g class="mw-anim mw-a25">
+<text x="22.0" y="214.0" font-size="13" xml:space="preserve"><tspan class="mw-m">MCTS</tspan><tspan class="mw-r"> over reasoning states (UCT)</tspan></text>
+<circle cx="40.0" cy="276.0" r="12" fill="#9aa0a6"/>
+<text x="40.0" y="280.5" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-xi">q</tspan></text>
+</g>
+<g class="mw-anim mw-a26">
+<line x1="52.0" y1="276.0" x2="131.0" y2="242.0" stroke="#5f6368" stroke-width="1.3"/>
+<circle cx="140.0" cy="242.0" r="9" fill="#fff" stroke="#3b7d23" stroke-width="1.6"/>
+<rect x="97.0" y="241.7" width="30.0" height="17.0" rx="4" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="112.0" y="254.7" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan></text>
+</g>
+<g class="mw-anim mw-a27">
+<line x1="52.0" y1="276.0" x2="131.0" y2="276.0" stroke="#5f6368" stroke-width="1.3"/>
+<circle cx="140.0" cy="276.0" r="9" fill="#fff" stroke="#3b7d23" stroke-width="1.6"/>
+<rect x="97.0" y="267.5" width="30.0" height="17.0" rx="4" fill="#fef5d4" stroke="#d9b13b" stroke-width="1"/>
+<text x="112.0" y="280.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan></text>
+</g>
+<g class="mw-anim mw-a28">
+<line x1="52.0" y1="276.0" x2="131.0" y2="310.0" stroke="#5f6368" stroke-width="1.3"/>
+<circle cx="140.0" cy="310.0" r="9" fill="#fff" stroke="#3b7d23" stroke-width="1.6"/>
+<rect x="97.0" y="293.3" width="30.0" height="17.0" rx="4" fill="#fff" stroke="#5f6368" stroke-width="1" stroke-dasharray="3 2"/>
+<text x="112.0" y="306.3" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-x">∅</tspan></text>
+</g>
+<g class="mw-anim mw-a29">
+<text x="222.0" y="228.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-xi">r</tspan><tspan class="mw-x" dx="3.25">=</tspan><tspan class="mw-x" dx="3.25">1[</tspan><tspan class="mw-xi">y</tspan><tspan class="mw-x" dx="3.25">=</tspan><tspan class="mw-xi" dx="3.25">ŷ</tspan><tspan class="mw-x">]</tspan></text>
+</g>
+<g class="mw-anim mw-a30">
+<line x1="149.0" y1="242.0" x2="196.0" y2="242.0" stroke="#5f6368" stroke-width="1.2" stroke-dasharray="3 3"/>
+<circle cx="208.0" cy="242.0" r="11" fill="#fff" stroke="#2e7d32" stroke-width="1.6"/>
+<text x="208.0" y="246.6" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">A</tspan></text>
+<path d="M226.0,243.0 l3.6,3.8 l7.2,-8.4" fill="none" stroke="#2e7d32" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="246.0" y="246.6" font-size="13" xml:space="preserve"><tspan class="mw-xi">r</tspan><tspan class="mw-x" dx="3.25">=</tspan><tspan class="mw-x" dx="3.25">1</tspan></text>
+</g>
+<g class="mw-anim mw-a31">
+<line x1="149.0" y1="276.0" x2="196.0" y2="276.0" stroke="#5f6368" stroke-width="1.2" stroke-dasharray="3 3"/>
+<circle cx="208.0" cy="276.0" r="11" fill="#fff" stroke="#c62828" stroke-width="1.6"/>
+<text x="208.0" y="280.6" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">B</tspan></text>
+<path d="M226.0,273.0 l8.0,8.0 M234.0,273.0 l-8.0,8.0" fill="none" stroke="#c62828" stroke-width="2.2" stroke-linecap="round"/>
+<text x="246.0" y="280.6" font-size="13" xml:space="preserve"><tspan class="mw-xi">r</tspan><tspan class="mw-x" dx="3.25">=</tspan><tspan class="mw-x" dx="3.25">0</tspan></text>
+</g>
+<g class="mw-anim mw-a32">
+<line x1="149.0" y1="310.0" x2="196.0" y2="310.0" stroke="#5f6368" stroke-width="1.2" stroke-dasharray="3 3"/>
+<circle cx="208.0" cy="310.0" r="11" fill="#fff" stroke="#2e7d32" stroke-width="1.6"/>
+<text x="208.0" y="314.6" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">A</tspan></text>
+<path d="M226.0,311.0 l3.6,3.8 l7.2,-8.4" fill="none" stroke="#2e7d32" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="246.0" y="314.6" font-size="13" xml:space="preserve"><tspan class="mw-xi">r</tspan><tspan class="mw-x" dx="3.25">=</tspan><tspan class="mw-x" dx="3.25">1</tspan></text>
+</g>
+<g class="mw-anim mw-a33">
+<rect x="22.0" y="344.0" width="146.0" height="64.0" rx="6" fill="#fff" stroke="#c3c8d0" stroke-width="1"/>
+<text x="30.0" y="362.0" font-size="13" xml:space="preserve"><tspan class="mw-m">per-unit data</tspan></text>
+<text x="30.0" y="381.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan><tspan class="mw-r" dy="-3.25"> </tspan><tspan class="mw-x">←</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">(</tspan><tspan class="mw-xi">x</tspan><tspan class="mw-x">,</tspan><tspan class="mw-x" dx="3.25">1)</tspan></text>
+<text x="30.0" y="400.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan><tspan class="mw-r" dy="-3.25"> </tspan><tspan class="mw-x">←</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">(</tspan><tspan class="mw-xi">x</tspan><tspan class="mw-x">,</tspan><tspan class="mw-x" dx="3.25">0)</tspan></text>
+</g>
+<g class="mw-anim mw-a34">
+<path d="M146,318 L188,348" fill="none" stroke="#5f6368" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 2" marker-end="url(#mw-ah-5f6368)"/>
+<rect x="176.0" y="344.0" width="144.0" height="64.0" rx="6" fill="#fff" stroke="#c3c8d0" stroke-width="1"/>
+<text x="184.0" y="362.0" font-size="13" xml:space="preserve"><tspan class="mw-m">seeds</tspan><tspan class="mw-r"> </tspan><tspan class="mw-x">→</tspan><tspan class="mw-r"> k-means</tspan></text>
+<circle cx="200.0" cy="384.0" r="3.2" fill="#9aa0a6"/>
+<circle cx="209.0" cy="378.0" r="3.2" fill="#9aa0a6"/>
+<circle cx="216.0" cy="388.0" r="3.2" fill="#9aa0a6"/>
+<circle cx="206.0" cy="394.0" r="3.2" fill="#9aa0a6"/>
+<circle cx="196.0" cy="392.0" r="3.2" fill="#9aa0a6"/>
+</g>
+<g class="mw-anim mw-a35">
+<ellipse cx="206" cy="387" rx="19" ry="14" fill="none" stroke="#5f6368" stroke-width="1.1" stroke-dasharray="3 2"/>
+</g>
+<g class="mw-anim mw-a36">
+<path d="M229,387 L252,387" fill="none" stroke="#3b7d23" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-3b7d23)"/>
+<rect x="256.0" y="377.0" width="50.0" height="20.0" rx="4" fill="#fef5d4" stroke="#3b7d23" stroke-width="1.4"/>
+<text x="281.0" y="391.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan></text>
+</g>
+<g class="mw-anim mw-a37">
+<path d="M308,387 C328,387 330,354 352,354" fill="none" stroke="#3b7d23" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-3b7d23)"/>
+</g>
+<g class="mw-anim mw-a38">
+<rect x="22.0" y="416.0" width="298.0" height="46.0" rx="6" fill="#fff" stroke="#c3c8d0" stroke-width="1"/>
+<text x="30.0" y="434.0" font-size="13" xml:space="preserve"><tspan class="mw-m">train heads</tspan><tspan class="mw-r"> · BCE</tspan></text>
+<text x="30.0" y="453.0" font-size="13" xml:space="preserve"><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan><tspan class="mw-r" dy="-3.25">, </tspan><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan><tspan class="mw-r" dy="-3.25">, </tspan><tspan class="mw-xi">π</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan><tspan class="mw-r" dy="-3.25"> updated</tspan></text>
+<line x1="216.0" y1="422.0" x2="216.0" y2="456.0" stroke="#5f6368" stroke-width="1"/>
+<line x1="216.0" y1="456.0" x2="310.0" y2="456.0" stroke="#5f6368" stroke-width="1"/>
+</g>
+<g class="mw-anim mw-a39 mw-draw">
+<path d="M220,425 C236,446 250,450 306,452" pathLength="100" fill="none" stroke="#b0506a" stroke-width="2" stroke-linecap="round"/>
+</g>
+<g class="mw-anim mw-a40">
+<text x="680.0" y="190.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">no pseudo-label, so no MCTS</tspan></text>
+</g>
+<g class="mw-anim mw-a41">
+<text x="680.0" y="214.0" font-size="13" xml:space="preserve"><tspan class="mw-m">memory-guided tree search</tspan></text>
+</g>
+<g class="mw-anim mw-a42">
+<circle cx="694.0" cy="240.0" r="10.5" fill="#1d3f8f"/>
+<polygon points="694.00,234.10 695.69,238.17 700.09,238.52 696.74,241.39 697.76,245.68 694.00,243.38 690.24,245.68 691.26,241.39 687.91,238.52 692.31,238.17" fill="#fff"/>
+<text x="712.0" y="244.6" font-size="13" xml:space="preserve"><tspan class="mw-r">LLM proposes step-goal </tspan><tspan class="mw-xi">ĝ</tspan></text>
+</g>
+<g class="mw-anim mw-a43 mw-draw">
+<path d="M683,240 C668,240 666,246 650,246" pathLength="100" fill="none" stroke="#e0600f" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M683,240 C668,240 666,318 650,318" pathLength="100" fill="none" stroke="#e0600f" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M683,240 C668,240 666,354 650,354" pathLength="100" fill="none" stroke="#e0600f" stroke-width="1.6" stroke-linecap="round"/>
+</g>
+<g class="mw-anim mw-a44">
+<rect x="350.0" y="229.0" width="300.0" height="34.0" rx="7" fill="none" stroke="#e0600f" stroke-width="1.6"/>
+<rect x="350.0" y="301.0" width="300.0" height="34.0" rx="7" fill="none" stroke="#e0600f" stroke-width="1.6"/>
+<rect x="350.0" y="337.0" width="300.0" height="34.0" rx="7" fill="none" stroke="#e0600f" stroke-width="1.6"/>
+</g>
+<g class="mw-anim mw-a45">
+<rect x="682.0" y="262.0" width="296.0" height="70.0" rx="6" fill="#fff" stroke="#c3c8d0" stroke-width="1"/>
+<text x="692.0" y="281.0" font-size="13" xml:space="preserve"><tspan class="mw-m">Layer 1</tspan><tspan class="mw-r"> · rank by </tspan><tspan class="mw-x">cos(</tspan><tspan class="mw-xi">ĝ</tspan><tspan class="mw-x">,</tspan><tspan class="mw-xi" dx="3.25">g</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">i</tspan><tspan class="mw-x" dy="-3.25">)</tspan></text>
+<text x="968.0" y="281.0" font-size="13" text-anchor="end" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">illustrative</tspan></text>
+</g>
+<g class="mw-anim mw-a46">
+<rect x="692.0" y="292.0" width="88.0" height="26.0" rx="5" fill="#fff" stroke="#e0600f" stroke-width="1.2"/>
+<text x="736.0" y="309.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan><tspan class="mw-r" dy="-3.25">  0.82</tspan></text>
+</g>
+<g class="mw-anim mw-a47">
+<rect x="786.0" y="292.0" width="88.0" height="26.0" rx="5" fill="#fff" stroke="#e0600f" stroke-width="1.2"/>
+<text x="830.0" y="309.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan><tspan class="mw-r" dy="-3.25">  0.71</tspan></text>
+</g>
+<g class="mw-anim mw-a48">
+<rect x="880.0" y="292.0" width="88.0" height="26.0" rx="5" fill="#fff" stroke="#e0600f" stroke-width="1.2"/>
+<text x="924.0" y="309.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan><tspan class="mw-r" dy="-3.25">  0.68</tspan></text>
+</g>
+<g class="mw-anim mw-a49">
+<rect x="682.0" y="340.0" width="296.0" height="70.0" rx="6" fill="#fff" stroke="#c3c8d0" stroke-width="1"/>
+<text x="692.0" y="359.0" font-size="13" xml:space="preserve"><tspan class="mw-m">Layer 2</tspan><tspan class="mw-r"> · rerank by head </tspan><tspan class="mw-xi">p</tspan><tspan class="mw-xi" font-size="9.36" dy="3.25">a</tspan></text>
+</g>
+<g class="mw-anim mw-a50">
+<rect x="692.0" y="370.0" width="88.0" height="26.0" rx="5" fill="#bf5210" stroke="#bf5210" stroke-width="1.2"/>
+<text x="736.0" y="387.5" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan><tspan class="mw-m" dy="-3.25">  0.86</tspan></text>
+</g>
+<g class="mw-anim mw-a51">
+<rect x="786.0" y="370.0" width="88.0" height="26.0" rx="5" fill="#fff" stroke="#e0600f" stroke-width="1.2"/>
+<text x="830.0" y="387.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">2</tspan><tspan class="mw-r" dy="-3.25">  0.72</tspan></text>
+</g>
+<g class="mw-anim mw-a52">
+<rect x="880.0" y="370.0" width="88.0" height="26.0" rx="5" fill="#fff" stroke="#e0600f" stroke-width="1.2"/>
+<text x="924.0" y="387.5" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">4</tspan><tspan class="mw-r" dy="-3.25">  0.65</tspan></text>
+</g>
+<g class="mw-anim mw-a53">
+<text x="619.0" y="323.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-r">0.65</tspan></text>
+<text x="619.0" y="251.0" font-size="13" text-anchor="middle" fill="#b0506a" xml:space="preserve"><tspan class="mw-r">0.72</tspan></text>
+<rect x="594.0" y="340.0" width="50.0" height="28.0" rx="5" fill="#bf5210" stroke="#bf5210" stroke-width="1"/>
+<text x="619.0" y="359.0" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-m">0.86</tspan></text>
+</g>
+<g class="mw-anim mw-a54">
+<rect x="349.0" y="336.0" width="302.0" height="36.0" rx="8" fill="none" stroke="#bf5210" stroke-width="2.6"/>
+</g>
+<g class="mw-anim mw-a55">
+<path d="M650,362 C664,362 668,428 686,428" fill="none" stroke="#bf5210" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#mw-ah-bf5210)"/>
+<text x="692.0" y="432.0" font-size="13" xml:space="preserve"><tspan class="mw-r">apply </tspan><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="9.36" dy="3.25">5</tspan><tspan class="mw-r" dy="-3.25"> </tspan><tspan class="mw-x">→</tspan><tspan class="mw-r"> LLM writes the next step</tspan></text>
+<text x="692.0" y="455.0" font-size="13" fill="#5f6368" xml:space="preserve"><tspan class="mw-r">pool</tspan></text>
+</g>
+<g class="mw-anim mw-a56">
+<circle cx="740.0" cy="450.5" r="10.5" fill="#fff" stroke="#e0600f" stroke-width="1.4"/>
+<text x="740.0" y="455.0" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">A</tspan></text>
+</g>
+<g class="mw-anim mw-a57">
+<circle cx="764.0" cy="450.5" r="10.5" fill="#fff" stroke="#e0600f" stroke-width="1.4"/>
+<text x="764.0" y="455.0" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">A</tspan></text>
+</g>
+<g class="mw-anim mw-a58">
+<circle cx="788.0" cy="450.5" r="10.5" fill="#fff" stroke="#9aa0a6" stroke-width="1.4"/>
+<text x="788.0" y="455.0" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">B</tspan></text>
+</g>
+<g class="mw-anim mw-a59">
+<circle cx="812.0" cy="450.5" r="10.5" fill="#fff" stroke="#e0600f" stroke-width="1.4"/>
+<text x="812.0" y="455.0" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">A</tspan></text>
+</g>
+<g class="mw-anim mw-a60">
+<circle cx="836.0" cy="450.5" r="10.5" fill="#fff" stroke="#9aa0a6" stroke-width="1.4"/>
+<text x="836.0" y="455.0" font-size="13" text-anchor="middle" xml:space="preserve"><tspan class="mw-r">C</tspan></text>
+</g>
+<g class="mw-anim mw-a61">
+<text x="858.0" y="455.0" font-size="13" xml:space="preserve"><tspan class="mw-x">→</tspan><tspan class="mw-r"> vote: </tspan><tspan class="mw-m">A</tspan></text>
+</g>
+<rect x="10.0" y="478.0" width="980.0" height="34.0" rx="8" fill="#f6f6f7" stroke="#c3c8d0" stroke-width="1"/>
+<g class="mw-anim mw-a62">
+<circle cx="279.3" cy="495.0" r="9" fill="#3b7d23"/>
+<text x="279.3" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">1</tspan></text>
+<text x="296.3" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-xi" font-size="10.08" dy="3.50">t</tspan><tspan class="mw-r" dy="-3.50">: 8 of the </tspan><tspan class="mw-xi">K</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-x" dx="3.50">10</tspan><tspan class="mw-r"> answers agree, so it is confident and goes to WRITE</tspan></text>
+</g>
+<g class="mw-anim mw-a63">
+<circle cx="301.8" cy="495.0" r="9" fill="#3b7d23"/>
+<text x="301.8" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">2</tspan></text>
+<text x="318.8" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-r">MCTS rollouts are scored against the pseudo-label: </tspan><tspan class="mw-xi">r</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-x" dx="3.50">1[</tspan><tspan class="mw-xi">y</tspan><tspan class="mw-x" dx="3.50">=</tspan><tspan class="mw-xi" dx="3.50">ŷ</tspan><tspan class="mw-x">]</tspan></text>
+</g>
+<g class="mw-anim mw-a64">
+<circle cx="245.9" cy="495.0" r="9" fill="#3b7d23"/>
+<text x="245.9" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">3</tspan></text>
+<text x="262.9" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-r">Seeds are summarized into a new unit </tspan><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="10.08" dy="3.50">5</tspan><tspan class="mw-r" dy="-3.50">; the per-unit heads are trained with BCE</tspan></text>
+</g>
+<g class="mw-anim mw-a65">
+<circle cx="303.2" cy="495.0" r="9" fill="#bf5210"/>
+<text x="303.2" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">4</tspan></text>
+<text x="320.2" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-xi">q</tspan><tspan class="mw-xi" font-size="10.08" dy="3.50">t</tspan><tspan class="mw-x" font-size="10.08">+1</tspan><tspan class="mw-r" dy="-3.50">: the answers disagree, so it is uncertain and goes to READ</tspan></text>
+</g>
+<g class="mw-anim mw-a66">
+<circle cx="296.2" cy="495.0" r="9" fill="#bf5210"/>
+<text x="296.2" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">5</tspan></text>
+<text x="313.2" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-r">Layer 1 retrieves the units whose sub-goals are most similar to </tspan><tspan class="mw-xi">ĝ</tspan></text>
+</g>
+<g class="mw-anim mw-a67">
+<circle cx="259.4" cy="495.0" r="9" fill="#bf5210"/>
+<text x="259.4" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">6</tspan></text>
+<text x="276.4" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-r">Layer 2: the learned heads rerank the candidates, and </tspan><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="10.08" dy="3.50">5</tspan><tspan class="mw-r" dy="-3.50"> moves to first place</tspan></text>
+</g>
+<g class="mw-anim mw-a68">
+<circle cx="290.2" cy="495.0" r="9" fill="#bf5210"/>
+<text x="290.2" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">7</tspan></text>
+<text x="307.2" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-xi">u</tspan><tspan class="mw-x" font-size="10.08" dy="3.50">5</tspan><tspan class="mw-r" dy="-3.50">'s sub-instruction guides the next step; the pool is majority-voted</tspan></text>
+</g>
+<g class="mw-anim mw-a69">
+<circle cx="249.6" cy="495.0" r="9" fill="#1e8183"/>
+<text x="249.6" y="499.6" font-size="13" text-anchor="middle" fill="#fff" xml:space="preserve"><tspan class="mw-b">8</tspan></text>
+<text x="266.6" y="500.0" font-size="14" xml:space="preserve"><tspan class="mw-r">Confident questions write memory, uncertain ones read it; the LLM stays frozen</tspan></text>
+</g>
+</svg>
