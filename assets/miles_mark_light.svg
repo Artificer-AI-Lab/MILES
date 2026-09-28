@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="MILES logo">
+  <title>MILES</title>
+  <!-- Light-background version of miles_mark.svg: same constellation, ink-colored stars, deeper link gradient. -->
+  <defs>
+    <linearGradient id="lk" x1="20" y1="0" x2="108" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2f6fe0"/><stop offset="1" stop-color="#10a986"/></linearGradient>
+    <linearGradient id="tr" x1="10" y1="0" x2="118" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d4902e"/><stop offset="0.5" stop-color="#17a98a"/><stop offset="1" stop-color="#1f3f86"/></linearGradient>
+    <linearGradient id="bm" x1="0" y1="70" x2="0" y2="106" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2f6fe0" stop-opacity="0.85"/><stop offset="1" stop-color="#2f6fe0" stop-opacity="0.12"/></linearGradient>
+    <radialGradient id="halo"><stop offset="0" stop-color="#17a98a" stop-opacity="0.26"/><stop offset="1" stop-color="#17a98a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="halo2"><stop offset="0" stop-color="#2f6fe0" stop-opacity="0.3"/><stop offset="1" stop-color="#2f6fe0" stop-opacity="0"/></radialGradient>
+  </defs>
+  <path d="M10 113 C 44 110.5, 80 106.5, 116 100" fill="none" stroke="#17a98a" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <path d="M10 112 C 42 108, 78 104, 116 98" fill="none" stroke="url(#tr)" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M64 70 L64 105.3" stroke="url(#bm)" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M26 92 L34 32 L64 70 L94 32 L102 92" fill="none" stroke="url(#lk)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <g><circle cx="26" cy="92" r="9" fill="url(#halo)"/><circle cx="34" cy="32" r="9" fill="url(#halo)"/><circle cx="64" cy="70" r="12" fill="url(#halo)"/><circle cx="94" cy="32" r="9" fill="url(#halo)"/><circle cx="102" cy="92" r="9" fill="url(#halo)"/></g>
+  <g fill="#15213b"><circle cx="26" cy="92" r="3.4"/><circle cx="34" cy="32" r="3.7"/><circle cx="64" cy="70" r="4.4"/><circle cx="94" cy="32" r="3.7"/><circle cx="102" cy="92" r="3.4"/></g>
+  <ellipse cx="64" cy="70" rx="12.5" ry="5.4" transform="rotate(-16 64 70)" fill="none" stroke="#2f6fe0" stroke-width="1.3" opacity="0.75"/>
+  <path d="M52.4 73.9 A 12.5 5.4 -16 0 0 76.1 66.4" fill="none" stroke="#15213b" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="116" cy="98" r="9" fill="url(#halo2)"/>
+  <path d="M116 90.5 L117 97 L123.5 98 L117 99 L116 105.5 L115 99 L108.5 98 L115 97 Z" fill="#15213b"/>
+  <circle cx="10" cy="112" r="2.1" fill="#d4902e"/>
+</svg>
